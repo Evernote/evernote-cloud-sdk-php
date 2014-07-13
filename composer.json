@@ -1,0 +1,30 @@
+{
+    "name": "evernote/evernote-cloud",
+    "description": "Evernote Cloud SDK for PHP",
+    "keywords": [
+        "evernote",
+        "api",
+        "sdk"
+    ],
+    "homepage": "https://github.com/evernote/evernote-cloud-sdk-php",
+    "version": "2.0",
+    "license": "Apache",
+    "authors": [
+        {
+            "name": "Laurent Sarrazin for Evernote",
+            "email": "laurent@sarrazin.io",
+            "homepage": "http://laurent.sarrazin.io",
+            "role": "Lead developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/evernote/evernote-cloud-sdk-php/issues",
+        "forum": "discussion.evernote.com/forum/61-evernote-for-developers/"
+    },
+    "autoload": {
+        "classmap": ["Evernote/src/"]
+    },
+    "require": {
+        "php": ">=5.3"
+    }
+}
