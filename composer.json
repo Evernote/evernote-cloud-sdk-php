@@ -19,7 +19,7 @@
     ],
     "support": {
         "issues": "https://github.com/evernote/evernote-cloud-sdk-php/issues",
-        "forum": "discussion.evernote.com/forum/61-evernote-for-developers/"
+        "forum": "https://discussion.evernote.com/forum/61-evernote-for-developers/"
     },
     "autoload": {
         "classmap": ["Evernote/src/"]
