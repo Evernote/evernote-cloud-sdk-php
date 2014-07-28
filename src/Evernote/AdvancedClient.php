@@ -9,14 +9,23 @@ class AdvancedClient
 {
     protected $sandbox;
 
+    protected $thriftClientFactory;
+
+    /** @var  \EDAM\UserStore\UserStoreClient */
     protected $userStore;
 
     const SANDBOX_BASE_URL = 'https://sandbox.evernote.com';
     const PROD_BASE_URL    = 'https://www.evernote.com';
 
-    public function __construct($sandbox = true)
+    public function __construct($sandbox = true, $thriftClientFactory = null)
     {
-        $this->sandbox = $sandbox;
+        $this->sandbox             = $sandbox;
+
+        if (null === $thriftClientFactory) {
+            $thriftClientFactory = new ThriftClientFactory();
+        }
+
+        $this->thriftClientFactory = $thriftClientFactory;
     }
 
     public function getUserStore()
@@ -47,9 +56,7 @@ class AdvancedClient
 
     protected function getThriftClient($type, $url)
     {
-        $factory = new ThriftClientFactory();
-
-        return $factory->createThriftClient($type, $url);
+        return $this->thriftClientFactory->createThriftClient($type, $url);
     }
 
 }
