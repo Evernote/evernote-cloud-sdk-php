@@ -79,6 +79,11 @@ class Notebook
         return $this->linkedNotebook !== null;
     }
 
+    public function isPublic()
+    {
+        return $this->isLinkedNotebook() && $this->linkedNotebook->shareKey === null;
+    }
+
     public function getGuid()
     {
         if ($this->notebook !== null) {

@@ -29,18 +29,21 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $this->assertCount(11, $notebooks);
 
+        /**
+         * 'guid' => array(isShared, isLinked, isBusiness, isPublic, isDefault)
+         */
         $expected = array(
-            '3b2cd01f-6e87-42b1-a86c-fffc5f291bb0' => array(false, false, false),
-            '0ffd1dae-ecdb-442b-9ef9-3da7271f35d5' => array(false, false, false),
-            '2192fc7a-eabd-413f-818e-bc08361114d3' => array(false, false, false),
-            '87fef3d9-a5c2-4454-9c92-8c049e865d6f' => array(false, false, false),
-            'bc1e4149-6550-417f-a3d1-b62c31c9bf77' => array(false, false, false),
-            'd6db5430-62cb-4b50-8d5d-49ba531f87b5' => array(true, false, false),
-            '04641fdd-b978-4654-bbaf-c9ed84b0b2a5' => array(true, false, false),
-            'c457f328-d7fe-4017-9149-cd905aedc75d' => array(false, true, false),
-            '31213ba9-dbc5-476d-b777-e478e4f3fcd9' => array(false, true, false),
-            '5c978a9c-9c96-4989-8029-a55ac0bbe212' => array(false, true, true),
-            'd8a20636-5d17-4615-b2f2-5f868dabe6fa' => array(true, true, true),
+            '3b2cd01f-6e87-42b1-a86c-fffc5f291bb0' => array(false, false, false, false),
+            '0ffd1dae-ecdb-442b-9ef9-3da7271f35d5' => array(false, false, false, false),
+            '2192fc7a-eabd-413f-818e-bc08361114d3' => array(false, false, false, false),
+            '87fef3d9-a5c2-4454-9c92-8c049e865d6f' => array(false, false, false, true),
+            'bc1e4149-6550-417f-a3d1-b62c31c9bf77' => array(false, false, false, true),
+            'd6db5430-62cb-4b50-8d5d-49ba531f87b5' => array(true, false, false, false),
+            '04641fdd-b978-4654-bbaf-c9ed84b0b2a5' => array(true, false, false, false),
+            'c457f328-d7fe-4017-9149-cd905aedc75d' => array(false, true, false, false),
+            '31213ba9-dbc5-476d-b777-e478e4f3fcd9' => array(false, true, false, false),
+            '5c978a9c-9c96-4989-8029-a55ac0bbe212' => array(false, true, true, false),
+            'd8a20636-5d17-4615-b2f2-5f868dabe6fa' => array(true, true, true, false),
         );
 
         foreach ($notebooks as $notebook) {
