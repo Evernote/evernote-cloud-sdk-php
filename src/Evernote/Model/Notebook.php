@@ -84,6 +84,11 @@ class Notebook
         return $this->isLinkedNotebook() && $this->linkedNotebook->shareKey === null;
     }
 
+    public function isDefaultNotebook()
+    {
+        return $this->notebook !== null && $this->notebook->defaultNotebook;
+    }
+
     public function getGuid()
     {
         if ($this->notebook !== null) {
