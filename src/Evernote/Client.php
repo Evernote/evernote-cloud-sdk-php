@@ -2,6 +2,7 @@
 
 namespace Evernote;
 
+use Evernote\Model\Note;
 use Evernote\Model\Notebook;
 
 class Client
@@ -261,5 +262,16 @@ class Client
         return $this->token;
     }
 
+
+    public function uploadNote(Note $note)
+    {
+        $edamNote          = new \EDAM\Types\Note();
+        $edamNote->title   = $note->title;
+        echo "\ncontent : " . $edamNote->content = $note->content;
+
+        $new_note = $this->getUserNotestore()->createNote($this->token, $edamNote);
+
+        return new Note($new_note);
+    }
 
 } 
