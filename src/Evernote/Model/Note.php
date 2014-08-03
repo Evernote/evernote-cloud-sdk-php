@@ -83,5 +83,14 @@ class Note
         return $this->content;
     }
 
+    /**
+     * @return \EDAM\Types\Note
+     */
+    public function getEdamNote()
+    {
+        return $this->edamNote;
+    }
+
+
 
 }
