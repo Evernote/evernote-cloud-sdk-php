@@ -91,6 +91,16 @@ class Note
         return $this->edamNote;
     }
 
+    /**
+     * @return string
+     */
+    public function getGuid()
+    {
+        return $this->guid;
+    }
+
+
+
 
 
 }

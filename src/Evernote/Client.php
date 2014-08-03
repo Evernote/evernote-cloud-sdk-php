@@ -287,4 +287,9 @@ class Client
         return new Note($uploaded_note);
     }
 
+    public function deleteNote(Note $note)
+    {
+        return $this->getUserNotestore()->deleteNote($this->token, $note->guid);
+    }
+
 } 
