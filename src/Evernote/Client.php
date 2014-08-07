@@ -284,12 +284,28 @@ class Client
             $uploaded_note = $this->getUserNotestore()->createNote($this->token, $edamNote);
         }
 
+        $uploaded_note->content = $note->content;
+
         return new Note($uploaded_note);
     }
 
     public function deleteNote(Note $note)
     {
         return $this->getUserNotestore()->deleteNote($this->token, $note->guid);
+    }
+
+    public function shareNote(Note $note)
+    {
+        $shareKey = $this->getUserNotestore()->shareNote($this->token, $note->getGuid());
+
+        $shardId = $this->getUser()->shardId;
+
+        return $this->getShareUrl($note->getGuid(), $shardId, $shareKey, $this->getAdvancedClient()->getEndpoint());
+    }
+
+    protected function getShareUrl($guid, $shardId, $shareKey, $serviceHost, $encodedAdditionalString = '')
+    {
+        return $serviceHost . "/shard/" . $shardId . "/sh/" . $guid . "/" . $shareKey;
     }
 
 } 

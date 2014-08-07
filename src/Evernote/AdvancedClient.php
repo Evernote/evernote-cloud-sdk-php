@@ -43,7 +43,7 @@ class AdvancedClient
         return $this->getThriftClient('note', $noteStoreUrl);
     }
 
-    protected function getEndpoint($path = null)
+    public function getEndpoint($path = null)
     {
         $url = $this->sandbox ? self::SANDBOX_BASE_URL : self::PROD_BASE_URL;
 
