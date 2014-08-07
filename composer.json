@@ -21,10 +21,8 @@
         "issues": "https://github.com/evernote/evernote-cloud-sdk-php/issues",
         "forum": "https://discussion.evernote.com/forum/61-evernote-for-developers/"
     },
-    "autoload": {
-        "classmap": ["Evernote/src/"]
-    },
     "require": {
-        "php": ">=5.3"
+        "php": ">=5.3",
+        "ohmy/auth": "*"
     }
 }

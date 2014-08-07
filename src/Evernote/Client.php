@@ -4,7 +4,7 @@ namespace Evernote;
 
 use Evernote\Model\Note;
 use Evernote\Model\Notebook;
-
+use ohmy\Auth1;
 class Client
 {
     /** @var  \Evernote\AdvancedClient */
@@ -31,7 +31,7 @@ class Client
     /** @var  \EDAM\UserStore\AuthenticationResult */
     protected $businessAuth;
 
-    public function __construct($token, $sandbox = true, $advancedClient = null)
+    public function __construct($token = null, $sandbox = true, $advancedClient = null)
     {
         $this->token   = $token;
         $this->sandbox = $sandbox;
@@ -41,6 +41,27 @@ class Client
         }
 
         $this->advancedClient = $advancedClient;
+    }
+
+    public function auth($key, $secret, $callback)
+    {
+        # do 3-legged oauth
+        $auth_data = Auth1::legs(3)
+            # configuration
+            ->set(array(
+                'consumer_key'    => $key,
+                'consumer_secret' => $secret,
+                'callback'        => $callback
+            ))
+            # oauth flow
+            ->request('https://www.evernote.com/oauth')
+            ->authorize('https://www.evernote.com/OAuth.action')
+            ->access('https://www.evernote.com/oauth')
+            ->finally(function($data) {
+                return $data->value;
+            });
+
+        return $auth_data;
     }
 
     public function getUser()
