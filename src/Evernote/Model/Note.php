@@ -2,6 +2,7 @@
 
 namespace Evernote\Model;
 
+use EDAM\Limits\Constant;
 use Evernote\Helper\EnmlConverterInterface;
 
 class Note
@@ -57,6 +58,17 @@ class Note
         $this->content = $content->toEnml();
 
         return $this;
+    }
+
+    public function validateForLimits()
+    {
+        $contentLength = strlen($this->getContent());
+        if ($contentLength > Constant::get('EDAM_NOTE_CONTENT_LEN_MAX')
+            || $contentLength < Constant::get('EDAM_NOTE_CONTENT_LEN_MIN')) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
