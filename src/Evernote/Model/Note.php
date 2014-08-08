@@ -141,4 +141,22 @@ class Note
     {
         return $this->getAttribute('reminderOrder') !== null;
     }
+
+    public function setReminder($timestamp = null)
+    {
+        $this->setAttribute('reminderOrder', time());
+        $this->setAttribute('reminderTime', $timestamp);
+    }
+
+    public function clearReminder()
+    {
+        $this->setAttribute('reminderOrder', null);
+        $this->setAttribute('reminderTime', null);
+        $this->setAttribute('reminderDoneTime', null);
+    }
+
+    public function setAsDone()
+    {
+        $this->setAttribute('reminderDoneTime', time());
+    }
 }
