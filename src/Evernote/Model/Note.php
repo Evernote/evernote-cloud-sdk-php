@@ -121,62 +121,18 @@ class Note
         return $this->guid;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getReminderDoneTime()
+    public function getAttribute($attribute)
     {
-        if (property_exists($this->attributes, 'reminderDoneTime')) {
-            return $this->attributes->reminderDoneTime;
+        if (property_exists($this->attributes, $attribute)) {
+            return $this->attributes->$attribute;
         }
 
         return null;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getReminderOrder()
+    public function setAttribute($attribute, $value)
     {
-        if (property_exists($this->attributes, 'reminderOrder')) {
-            return $this->attributes->reminderOrder;
-        }
-
-        return null;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getReminderTime()
-    {
-        if (property_exists($this->attributes, 'reminderTime')) {
-            return $this->attributes->reminderTime;
-        }
-
-        return null;
-    }
-
-
-    public function setReminderDoneTime($timestamp = null)
-    {
-        if (null === $timestamp) {
-            $timestamp = time();
-        }
-        $this->attributes->reminderDoneTime = $timestamp;
-    }
-
-    public function setReminderOrder($timestamp = null)
-    {
-        if (null === $timestamp) {
-            $timestamp = time();
-        }
-        $this->attributes->reminderOrder = $timestamp;
-    }
-
-    public function setReminderTime($timestamp)
-    {
-        $this->attributes->reminderTime = $timestamp;
+        $this->attributes->$attribute = $value;
     }
 
     public function getAttributes()
