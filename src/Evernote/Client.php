@@ -296,8 +296,9 @@ class Client
             }
         }
 
-        $edamNote->title   = $note->title;
-        $edamNote->content = $note->content;
+        $edamNote->title      = $note->title;
+        $edamNote->content    = $note->content;
+        $edamNote->attributes = $note->attributes;
 
         if (null !== $noteToReplace) {
             $uploaded_note = $this->getUserNotestore()->updateNote($this->token, $edamNote);
