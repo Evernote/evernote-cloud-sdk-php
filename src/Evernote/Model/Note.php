@@ -26,9 +26,6 @@ class Note
     /** @var  \EDAM\Types\NoteAttributes */
     protected $attributes;
 
-    /** @var  boolean */
-    protected $isReminder;
-
     public function __construct(\EDAM\Types\Note $edamNote = null)
     {
         if (null !== $edamNote) {
@@ -138,5 +135,10 @@ class Note
     public function getAttributes()
     {
         return $this->attributes;
+    }
+
+    public function isReminder()
+    {
+        return $this->getAttribute('reminderOrder') !== null;
     }
 }
