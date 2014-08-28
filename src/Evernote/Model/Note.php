@@ -159,4 +159,14 @@ class Note
     {
         $this->setAttribute('reminderDoneTime', time());
     }
+
+    public function addResource(Resource $resource)
+    {
+        $this->resources[] = $resource->edamResource;
+    }
+
+    public function getResources()
+    {
+        return $this->resources;
+    }
 }
