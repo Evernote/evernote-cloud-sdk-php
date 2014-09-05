@@ -1,6 +1,6 @@
 <?php
 
-namespace Evernote\Helper;
+namespace Evernote\Enml\Converter;
 
 class PlainTextToEnmlConverter implements EnmlConverterInterface
 {

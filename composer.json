@@ -23,6 +23,7 @@
     },
     "require": {
         "php": ">=5.3",
-        "ohmy/auth": "*"
+        "ohmy/auth": "*",
+        "ezyang/htmlpurifier": "dev-master"
     }
 }

@@ -60,9 +60,9 @@ class Note
         }
     }
 
-    public function setContent(NoteContentInterface $content)
+    public function setContent($content)
     {
-        $this->content = $content->toEnml();
+        $this->content = $content;
 
         return $this;
     }
