@@ -2,6 +2,7 @@
 
 namespace Evernote;
 
+use EDAM\Types\LinkedNotebook;
 use Evernote\Model\Note;
 use Evernote\Model\Notebook;
 use ohmy\Auth1;
@@ -92,8 +93,16 @@ class Client
         return $this->getBusinessNoteStore()->listSharedNotebooks($this->getBusinessToken());
     }
 
+    public function getBusinessLinkedNotebooks()
+    {
+        return $this->getBusinessNoteStore()->listNotebooks($this->getBusinessToken());
+    }
+
     public function listNotebooks()
     {
+        /**
+         * 1. Get all of the user's personal notebooks.
+         */
         $personalNotebooks = $this->listPersonalNotebooks();
 
         $resultNotebooks  = array();
@@ -104,17 +113,32 @@ class Client
             $guidsToNotebooks[$personalNotebook->guid] = $resultNotebook;
         }
 
+        /**
+         * Get shared notebooks and flag the matching notebook as shared
+         */
         $sharedNotebooks = $this->listSharedNotebooks();
 
         foreach ($sharedNotebooks as $sharedNotebook) {
             $guidsToNotebooks[$sharedNotebook->notebookGuid]->isShared = true;
         }
 
-        $linkedPersonalNotebooks = $this->listLinkedNotebooks();
+        /**
+         * 2. Get all of the user's linked notebooks. These will include business and/or shared notebooks.
+         */
+        $linkedNotebooks = $this->listLinkedNotebooks();
 
-        if (count($linkedPersonalNotebooks) > 0) {
+        if (count($linkedNotebooks) > 0) {
+            /**
+             * 3. Business user
+             */
             if (null !== $this->getBusinessNoteStore()) {
-                $businessSharedNotebooks     = $this->getBusinessNoteStore()->listSharedNotebooks($this->getBusinessToken());
+
+                /**
+                 * a. Get the business's shared notebooks. Some of these may match to personal linked notebooks.
+                 *
+                 */
+                $businessSharedNotebooks     = $this->getBusinessSharedNotebooks();
+//                var_dump($businessSharedNotebooks);
                 $sharedBusinessNotebookGuids = array();
                 $sharedBusinessNotebooks     = array();
                 foreach ($businessSharedNotebooks as $businessSharedNotebook) {
@@ -124,49 +148,44 @@ class Client
 
                 $guidsCount = array_count_values($sharedBusinessNotebookGuids);
 
+                var_dump($guidsCount);
+
                 $businessNotebooksGuids = array();
 
-                $businessNoteStore = $this->getBusinessNoteStore();
-
-                $businessToken     = $this->getBusinessToken();
-
-                $businessNotebooks = $businessNoteStore->listNotebooks($businessToken);
+                /**
+                 * b. Get the business's linked notebooks. Some of these will match to shared notebooks in (a), providing a
+                //      complete authorization story for the notebook.
+                 */
+                $businessNotebooks = $this->getBusinessLinkedNotebooks();
+//                var_dump($businessNotebooks);
 
                 foreach ($businessNotebooks as $businessNotebook) {
                     $businessNotebooksGuids[$businessNotebook->guid] = $businessNotebook;
                 }
 
-                foreach ($linkedPersonalNotebooks as $linkedPersonalNotebook) {
-                    if (array_key_exists($linkedPersonalNotebook->shareKey, $sharedBusinessNotebooks)) {
-                        $sharedNotebook = $sharedBusinessNotebooks[$linkedPersonalNotebook->shareKey];
+                foreach ($linkedNotebooks as $linkedNotebook) {
+                    if (array_key_exists($linkedNotebook->shareKey, $sharedBusinessNotebooks)) {
+                        $sharedNotebook = $sharedBusinessNotebooks[$linkedNotebook->shareKey];
                         $businessNotebook = $businessNotebooksGuids[$sharedNotebook->notebookGuid];
 
-                        $result = new Notebook($businessNotebook, $linkedPersonalNotebook, $sharedNotebook, $businessNotebook);
+                        $result = new Notebook($businessNotebook, $linkedNotebook, $sharedNotebook, $businessNotebook);
                         if ((array_key_exists($sharedNotebook->notebookGuid, $guidsCount) && $guidsCount[$sharedNotebook->notebookGuid] > 1)
                             || $businessNotebook->businessNotebook !== null) {
                             $result->isShared = true;
                         }
                         $resultNotebooks[] = $result;
                     } else {
-                        $sharedNoteStore = $this->getNotestore($linkedPersonalNotebook->noteStoreUrl);
-                        if (null === $linkedPersonalNotebook->shareKey) {
+                        if (null === $linkedNotebook->shareKey) {
                             continue;
                         }
-                        $authResult = $sharedNoteStore->authenticateToSharedNotebook($linkedPersonalNotebook->shareKey, $this->token);
-                        $sharedNotebook = $sharedNoteStore->getSharedNotebookByAuth($authResult->authenticationToken);
-                        $resultNotebook = new Notebook(null, $linkedPersonalNotebook, $sharedNotebook);
-                        $resultNotebooks[] = $resultNotebook;
+                        $resultNotebooks[] = $this->getNoteBookByLinkedNotebook($linkedNotebook);
                     }
                 }
 
             } else {
-                foreach ($linkedPersonalNotebooks as $linkedNotebook) {
+                foreach ($linkedNotebooks as $linkedNotebook) {
                     try {
-                        $sharedNoteStore = $this->getNotestore($linkedNotebook->noteStoreUrl);
-                        $authResult = $sharedNoteStore->authenticateToSharedNotebook($linkedNotebook->shareKey, $this->token);
-                        $sharedNotebook = $sharedNoteStore->getSharedNotebookByAuth($authResult->authenticationToken);
-                        $resultNotebook = new Notebook(null, $linkedNotebook, $sharedNotebook);
-                        $resultNotebooks[] = $resultNotebook;
+                        $resultNotebooks[] = $this->getNoteBookByLinkedNotebook($linkedNotebook);
                     } catch (\Exception $e) {
                         echo "\nNope";
                     }
@@ -177,6 +196,16 @@ class Client
         return $resultNotebooks;
     }
 
+    protected function getNoteBookByLinkedNotebook(LinkedNotebook $linkedNotebook)
+    {
+        $sharedNoteStore = $this->getNotestore($linkedNotebook->noteStoreUrl);
+        $authResult = $sharedNoteStore->authenticateToSharedNotebook($linkedNotebook->shareKey, $this->token);
+        $sharedNotebook = $sharedNoteStore->getSharedNotebookByAuth($authResult->authenticationToken);
+
+        return new Notebook(null, $linkedNotebook, $sharedNotebook);
+    }
+    
+    
     public function listPersonalNotebooks()
     {
         $notebooks = $this->getUserNotestore()->listNotebooks($this->token);
