@@ -49,6 +49,16 @@ class Notebook
         $this->businessNotebook = $businessNotebook;
     }
 
+    public function __get($name)
+    {
+        $method = 'get' . ucfirst($name);
+
+        if (method_exists($this, $method)) {
+
+            return $this->$method();
+        }
+    }
+
     public function getName()
     {
         if (null !== $this->notebook) {
