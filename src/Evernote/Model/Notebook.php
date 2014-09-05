@@ -7,9 +7,6 @@ class Notebook
     /** @var string  */
     protected $name = '';
 
-    /** @var string  */
-    protected $ownerDisplayName = '';
-
     /** @var bool  */
     protected $allowsWriting = false;
 
@@ -66,17 +63,6 @@ class Notebook
         } else {
             return $this->linkedNotebook->shareName;
         }
-    }
-
-    public function getOwnerDisplayName()
-    {
-        if (null !== $this->linkedNotebook) {
-            $ownerName = $this->linkedNotebook->username;
-        } else {
-            $ownerName = 'USER DISPLAY NAME';
-        }
-
-        return $ownerName;
     }
 
     public function isBusinessNotebook()
