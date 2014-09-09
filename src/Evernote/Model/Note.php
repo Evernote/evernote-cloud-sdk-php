@@ -163,6 +163,33 @@ class Note
         $this->setAttribute('reminderDoneTime', time() * 1000);
     }
 
+    public function isDone()
+    {
+        return $this->getAttribute('reminderDoneTime') !== null;
+    }
+
+    public function getReminderTime()
+    {
+        $reminder_time = $this->getAttribute('reminderTime');
+
+        if (null !== $reminder_time) {
+            $reminder_time = $reminder_time / 1000;
+        }
+
+        return $reminder_time;
+    }
+
+    public function getReminderDoneTime()
+    {
+        $reminder_done_time = $this->getAttribute('reminderDoneTime');
+
+        if (null !== $reminder_done_time) {
+            $reminder_done_time = $reminder_done_time / 1000;
+        }
+
+        return $reminder_done_time;
+    }
+
     public function addResource(Resource $resource)
     {
         $this->resources[] = $resource->edamResource;
