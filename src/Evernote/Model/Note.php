@@ -62,6 +62,9 @@ class Note
 
     public function setContent($content)
     {
+        if ($content instanceof NoteContentInterface) {
+            $content = $content->toEnml();
+        }
         $this->content = $content;
 
         return $this;
