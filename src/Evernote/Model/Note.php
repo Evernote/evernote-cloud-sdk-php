@@ -148,7 +148,7 @@ class Note
     public function setReminder($timestamp = null)
     {
         $this->setAttribute('reminderOrder', time());
-        $this->setAttribute('reminderTime', $timestamp);
+        $this->setAttribute('reminderTime', $timestamp * 1000);
     }
 
     public function clearReminder()
@@ -160,7 +160,7 @@ class Note
 
     public function setAsDone()
     {
-        $this->setAttribute('reminderDoneTime', time());
+        $this->setAttribute('reminderDoneTime', time() * 1000);
     }
 
     public function addResource(Resource $resource)
