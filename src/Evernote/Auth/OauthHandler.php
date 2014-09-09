@@ -2,25 +2,34 @@
 
 namespace Evernote\Auth;
 
+use ohmy\Auth1;
+
 class OauthHandler
 {
+    protected $sandbox;
+
+    public function __construct($sandbox = true)
+    {
+        $this->sandbox = $sandbox;
+    }
+    
     public function authorize($key, $secret, $callback)
     {
-        $auth_data = Auth1::legs(3)
-            # configuration
+        $subdomain = (true === $this->sandbox) ? 'sandbox':'www';
+
+        $oauth_data = Auth1::legs(3)
             ->set(array(
                 'consumer_key'    => $key,
                 'consumer_secret' => $secret,
                 'callback'        => $callback
             ))
-            # oauth flow
-            ->request('https://www.evernote.com/oauth')
-            ->authorize('https://www.evernote.com/OAuth.action')
-            ->access('https://www.evernote.com/oauth')
+            ->request('https://' . $subdomain . '.evernote.com/oauth')
+            ->authorize('https://' . $subdomain . '.evernote.com/OAuth.action')
+            ->access('https://' . $subdomain . '.evernote.com/oauth')
             ->finally(function($data) {
-                return $data->value;
+                return $data;
             });
 
-        return $auth_data;
+        return $oauth_data->value;
     }
 } 
