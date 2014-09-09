@@ -2,7 +2,7 @@
 
 namespace Evernote\Model;
 
-use Evernote\Helper\PlainTextToEnmlConverter;
+use Evernote\Enml\Converter\PlainTextToEnmlConverter;
 
 class PlainTextNoteContent extends NoteContent implements NoteContentInterface
 {
