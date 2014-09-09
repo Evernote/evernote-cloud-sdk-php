@@ -126,7 +126,6 @@ class Client
          * 2. Get all of the user's linked notebooks. These will include business and/or shared notebooks.
          */
         $linkedNotebooks = $this->listLinkedNotebooks();
-
         if (count($linkedNotebooks) > 0) {
             /**
              * 3. Business user
@@ -138,7 +137,6 @@ class Client
                  *
                  */
                 $businessSharedNotebooks     = $this->getBusinessSharedNotebooks();
-//                var_dump($businessSharedNotebooks);
                 $sharedBusinessNotebookGuids = array();
                 $sharedBusinessNotebooks     = array();
                 foreach ($businessSharedNotebooks as $businessSharedNotebook) {
@@ -148,8 +146,6 @@ class Client
 
                 $guidsCount = array_count_values($sharedBusinessNotebookGuids);
 
-                var_dump($guidsCount);
-
                 $businessNotebooksGuids = array();
 
                 /**
@@ -157,7 +153,6 @@ class Client
                 //      complete authorization story for the notebook.
                  */
                 $businessNotebooks = $this->getBusinessLinkedNotebooks();
-//                var_dump($businessNotebooks);
 
                 foreach ($businessNotebooks as $businessNotebook) {
                     $businessNotebooksGuids[$businessNotebook->guid] = $businessNotebook;
@@ -334,7 +329,7 @@ class Client
         return $this->getShareUrl($note->getGuid(), $shardId, $shareKey, $this->getAdvancedClient()->getEndpoint());
     }
 
-    protected function getShareUrl($guid, $shardId, $shareKey, $serviceHost, $encodedAdditionalString = '')
+    protected function getShareUrl($guid, $shardId, $shareKey, $serviceHost)
     {
         return $serviceHost . "/shard/" . $shardId . "/sh/" . $guid . "/" . $shareKey;
     }
