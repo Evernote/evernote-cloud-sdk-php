@@ -286,17 +286,28 @@ class Client
         return $this->token;
     }
 
+    public function replaceNote(Note $noteToReplace, Note $note)
+    {
+        $edamNote = $noteToReplace->getEdamNote();
+
+        $edamNote->title      = $note->title;
+        $edamNote->content    = $note->content;
+        $edamNote->attributes = $note->attributes;
+        $edamNote->resources  = $note->resources;
+
+        $uploaded_note = $this->getUserNotestore()->updateNote($this->token, $edamNote);
+
+        $uploaded_note->content = $note->content;
+
+        return new Note($uploaded_note);
+    }
 
     public function uploadNote(Note $note, Notebook $notebook = null, Note $noteToReplace = null)
     {
-        if (null !== $noteToReplace) {
-            $edamNote = $noteToReplace->getEdamNote();
-        } else {
-            $edamNote = new \EDAM\Types\Note();
+        $edamNote = new \EDAM\Types\Note();
 
-            if (null !== $notebook) {
-                $edamNote->notebookGuid = $notebook->getGuid();
-            }
+        if (null !== $notebook) {
+            $edamNote->notebookGuid = $notebook->getGuid();
         }
 
         $edamNote->title      = $note->title;
@@ -304,11 +315,7 @@ class Client
         $edamNote->attributes = $note->attributes;
         $edamNote->resources  = $note->resources;
 
-        if (null !== $noteToReplace) {
-            $uploaded_note = $this->getUserNotestore()->updateNote($this->token, $edamNote);
-        } else {
-            $uploaded_note = $this->getUserNotestore()->createNote($this->token, $edamNote);
-        }
+        $uploaded_note = $this->getUserNotestore()->createNote($this->token, $edamNote);
 
         $uploaded_note->content = $note->content;
 
