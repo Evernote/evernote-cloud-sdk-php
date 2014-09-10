@@ -23,7 +23,11 @@
     },
     "require": {
         "php": ">=5.3",
-        "ohmy/auth": "*",
-        "ezyang/htmlpurifier": "dev-master"
+        "ohmy/auth": "~0.0.7",
+        "ezyang/htmlpurifier": "~4.6.0"
+    },
+    "autoload": {
+        "psr-0": { "Evernote": "src/", "Thrift": "src/"},
+        "classmap": ["src/EDAM"]
     }
 }
