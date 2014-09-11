@@ -299,11 +299,19 @@ class Client
 
         $uploaded_note->content = $note->content;
 
-        return new Note($uploaded_note);
+        $en_note = new Note($uploaded_note);
+
+        $en_note->setSaved(true);
+
+        return $en_note;
     }
 
-    public function uploadNote(Note $note, Notebook $notebook = null, Note $noteToReplace = null)
+    public function uploadNote(Note $note, Notebook $notebook = null)
     {
+        if (true === $note->getSaved()) {
+            return $this->replaceNote($note, $note);
+        }
+
         $edamNote = new \EDAM\Types\Note();
 
         if (null !== $notebook) {
@@ -319,7 +327,12 @@ class Client
 
         $uploaded_note->content = $note->content;
 
-        return new Note($uploaded_note);
+        $en_note = new Note($uploaded_note);
+
+        $en_note->setSaved(true);
+
+        return $en_note;
+
     }
 
     public function deleteNote(Note $note)

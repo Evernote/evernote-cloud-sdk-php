@@ -26,6 +26,9 @@ class Note
     /** @var  \EDAM\Types\NoteAttributes */
     protected $attributes;
 
+    /** @var  boolean */
+    protected $saved;
+
     public function __construct(\EDAM\Types\Note $edamNote = null)
     {
         if (null !== $edamNote) {
@@ -62,10 +65,11 @@ class Note
 
     public function setContent($content)
     {
-        if ($content instanceof NoteContentInterface) {
-            $content = $content->toEnml();
+        if (false === $content instanceof NoteContentInterface) {
+            $content = new PlainTextNoteContent($content);
         }
-        $this->content = $content;
+
+        $this->content = $content->toEnml();
 
         return $this;
     }
@@ -198,5 +202,15 @@ class Note
     public function getResources()
     {
         return $this->resources;
+    }
+
+    public function getSaved()
+    {
+        return $this->saved;
+    }
+
+    public function setSaved($value)
+    {
+        $this->saved = $value;
     }
 }
