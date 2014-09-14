@@ -306,7 +306,7 @@ class Client
         return $en_note;
     }
 
-    public function uploadNote(Note $note, Notebook $notebook = null)
+    public function uploadNote(Note $note, $notebook_guid = null)
     {
         if (true === $note->getSaved()) {
             return $this->replaceNote($note, $note);
@@ -314,8 +314,8 @@ class Client
 
         $edamNote = new \EDAM\Types\Note();
 
-        if (null !== $notebook) {
-            $edamNote->notebookGuid = $notebook->getGuid();
+        if (null !== $notebook_guid) {
+            $edamNote->notebookGuid = $notebook_guid;
         }
 
         $edamNote->title      = $note->title;
