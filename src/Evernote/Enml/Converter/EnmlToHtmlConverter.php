@@ -6,7 +6,7 @@ class EnmlToHtmlConverter implements HtmlConverterInterface
 {
     public function convertToHtml($content)
     {
-        return $this->xslTransform($content, 'enml2html.xslt');
+        return $this->xslTransform($content, __DIR__ . '/enml2html.xslt');
     }
 
     public function xslTransform($enml, $xsl_file)

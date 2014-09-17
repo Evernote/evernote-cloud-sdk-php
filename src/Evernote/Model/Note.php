@@ -35,7 +35,7 @@ class Note
             $this->edamNote   = $edamNote;
             $this->guid       = $edamNote->guid;
             $this->title      = $edamNote->title;
-            $this->content    = $edamNote->content;
+            $this->content    = new EnmlNoteContent($edamNote->content);
             $this->resources  = $edamNote->resources;
             $this->attributes = $edamNote->attributes;
         } else {

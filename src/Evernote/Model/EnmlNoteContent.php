@@ -27,6 +27,11 @@ class EnmlNoteContent extends NoteContent implements NoteContentInterface
         return $this->content;
     }
 
+    public function __toString()
+    {
+        return $this->content;
+    }
+
     public function toHtml()
     {
         $html = $this->getHtmlConverter()->convertToHtml($this->content);

@@ -2,6 +2,8 @@
 
 namespace Evernote;
 
+use EDAM\NoteStore\NoteFilter;
+use EDAM\NoteStore\NotesMetadataResultSpec;
 use EDAM\Types\LinkedNotebook;
 use Evernote\Model\Note;
 use Evernote\Model\Notebook;
@@ -347,6 +349,13 @@ class Client
         $shardId = $this->getUser()->shardId;
 
         return $this->getShareUrl($note->getGuid(), $shardId, $shareKey, $this->getAdvancedClient()->getEndpoint());
+    }
+
+    public function getNote($guid)
+    {
+        $note = $this->getUserNotestore()->getNote($this->token, $guid, true, true, false, false);
+
+        return new Note($note);
     }
 
     protected function getShareUrl($guid, $shardId, $shareKey, $serviceHost)
