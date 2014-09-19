@@ -24,7 +24,8 @@
     "require": {
         "php": ">=5.3",
         "ohmy/auth": "~0.0.7",
-        "ezyang/htmlpurifier": "~4.6.0"
+        "ezyang/htmlpurifier": "~4.6.0",
+        "tijsverkoyen/css-to-inline-styles": "~1.5"
     },
     "autoload": {
         "psr-0": { "Evernote": "src/", "Thrift": "src/"},
