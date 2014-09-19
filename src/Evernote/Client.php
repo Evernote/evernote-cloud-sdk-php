@@ -2,6 +2,7 @@
 
 namespace Evernote;
 
+use EDAM\Error\EDAMUserException;
 use EDAM\NoteStore\NoteFilter;
 use EDAM\NoteStore\NotesMetadataResultSpec;
 use EDAM\Types\LinkedNotebook;
@@ -127,7 +128,13 @@ class Client
         /**
          * 2. Get all of the user's linked notebooks. These will include business and/or shared notebooks.
          */
-        $linkedNotebooks = $this->listLinkedNotebooks();
+
+        try {
+            $linkedNotebooks = $this->listLinkedNotebooks();
+        } catch (EDAMUserException $e) {
+            $linkedNotebooks = array();
+        }
+
         if (count($linkedNotebooks) > 0) {
             /**
              * 3. Business user
