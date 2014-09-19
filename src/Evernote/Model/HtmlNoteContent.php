@@ -6,6 +6,8 @@ use Evernote\Enml\Converter\HtmlToEnmlConverter;
 
 class HtmlNoteContent extends NoteContent implements NoteContentInterface
 {
+    protected $baseUrl;
+
     public function getEnmlConverter()
     {
         if (null === $this->enmlConverter) {
@@ -17,6 +19,11 @@ class HtmlNoteContent extends NoteContent implements NoteContentInterface
 
     public function toEnml()
     {
-        return $this->getEnmlConverter()->convertToEnml($this->content);
+        return $this->getEnmlConverter()->convertToEnml($this->content, $this->baseUrl);
+    }
+
+    public function setBaseUrl($base_url)
+    {
+        $this->baseUrl = $base_url;
     }
 }

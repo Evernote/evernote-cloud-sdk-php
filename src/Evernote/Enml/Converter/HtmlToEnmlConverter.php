@@ -2,22 +2,49 @@
 
 namespace Evernote\Enml\Converter;
 
+use Evernote\Enml\CSSInliner\CssInlinerInterface;
+use Evernote\Enml\CSSInliner\CssToInlineStyles;
+use Evernote\Enml\HtmlCleaner\HtmlCleanerInterface;
 use Evernote\Enml\HtmlCleaner\HtmlPurifier;
 
 class HtmlToEnmlConverter implements EnmlConverterInterface
 {
     protected $htmlCleaner;
 
+    protected $cssInliner;
+
+
+    public function __construct(HtmlCleanerInterface $html_cleaner = null, CssInlinerInterface $css_inliner = null)
+    {
+        if (null === $html_cleaner) {
+            $html_cleaner = new HtmlPurifier();
+        }
+
+        if (null === $css_inliner) {
+            $css_inliner = new CssToInlineStyles();
+        }
+
+        $this->htmlCleaner = $html_cleaner;
+        $this->cssInliner  = $css_inliner;
+    }
+
     public function convertToEnml($content, $base_url = null)
     {
-        //First we try to clean the HTML
-        $cleanHtml = $this->cleanHtml($content);
+        $base_url = ($base_url === null)?'http://example.com':$base_url;
 
+        //fix urls
+        $content = str_replace('href="/', 'href="' . $base_url . '/', $content);
+        $content = str_replace('href=""', 'href="' . $base_url . '"', $content);
+
+//      $css = $this->extractCssFromHtml($content);
         //Then we inline the CSS
-        //$cleanHtml = $this->inlineCss($cleanHtml);
+//      echo $cleanHtml = @$this->inlineCss($content, $css);
+
+        //First we try to clean the HTML
+        $content = $this->cleanHtml($content);
 
         //Transform to ENML via XSLT
-        $enml_body = $this->xslTransform($cleanHtml, 'html2enml.xslt');
+        $enml_body = $this->xslTransform($content, 'html2enml.xslt');
 
         $enml = <<<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -27,13 +54,7 @@ $enml_body
 </en-note>
 EOF;
 
-        echo $base_url = ($base_url === null)?'http://example.com':$base_url;
-
-
-        //fix urls
-        $enml = str_replace('href="/', 'href="' . $base_url . '/', $enml);
-        $enml = str_replace('href=""', 'href="' . $base_url . '"', $enml);
-
+        $enml = $enml_body;
 
         return $enml;
     }
@@ -91,6 +112,11 @@ $cleanHtml
 EOF;
     }
 
+    public function inlineCss($html, $css)
+    {
+        return $this->getCssInliner()->convert($html, $css);
+    }
+
     public function convertRelativeToAbsoluteUrls($html)
     {
         return $html;
@@ -103,10 +129,32 @@ EOF;
 
     public function getHtmlCleaner()
     {
-        if (null === $this->htmlCleaner) {
-            $this->htmlCleaner = new HtmlPurifier();
+        return $this->htmlCleaner;
+    }
+
+    public function getCssInliner()
+    {
+        return $this->cssInliner;
+    }
+
+    public function extractCssFromHtml($html)
+    {
+        $dom = new \DOMDocument();
+        @$dom->loadHTML($html);
+
+        $links = $dom->getElementsByTagName('link');
+
+        $css = '';
+
+        foreach($links as $link)
+        {
+            foreach ($link->attributes as $attribute) {
+                if ($attribute->name === 'rel' && $attribute->value === 'stylesheet') {
+                    $css .= file_get_contents($link->getAttribute('href'));
+                }
+            }
         }
 
-        return $this->htmlCleaner;
+        return $css;
     }
 } 
