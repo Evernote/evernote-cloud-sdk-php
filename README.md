@@ -8,21 +8,11 @@ Installation
 
 The recommended way to install the SDK is through composer.
 
-Just create a `composer.json` file for your project:
-
-``` json
-{
-    "require": {
-        "evernote/evernote-cloud-sdk-php": "@dev-master"
-    }
-}
-```
-
-And run these two commands to install it:
+Just run these two commands to install it:
 
 ``` bash
 $ curl -sS https://getcomposer.org/installer | php
-$ composer install
+$ composer require evernote/evernote-cloud-sdk-php
 ```
 
 Now you can add the autoloader, and you will have access to the library:
