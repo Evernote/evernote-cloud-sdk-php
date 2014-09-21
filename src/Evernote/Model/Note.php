@@ -17,6 +17,10 @@ class Note
     /** @var string  */
     protected $title = '';
 
+    /** @var string  */
+    protected $notebookGuid = '';
+
+
     /** @var \Evernote\Model\NoteContentInterface */
     protected $content = '';
 
@@ -32,12 +36,13 @@ class Note
     public function __construct(\EDAM\Types\Note $edamNote = null)
     {
         if (null !== $edamNote) {
-            $this->edamNote   = $edamNote;
-            $this->guid       = $edamNote->guid;
-            $this->title      = $edamNote->title;
-            $this->content    = new EnmlNoteContent($edamNote->content);
-            $this->resources  = $edamNote->resources;
-            $this->attributes = $edamNote->attributes;
+            $this->edamNote     = $edamNote;
+            $this->guid         = $edamNote->guid;
+            $this->notebookGuid = $edamNote->notebookGuid;
+            $this->title        = $edamNote->title;
+            $this->content      = new EnmlNoteContent($edamNote->content);
+            $this->resources    = $edamNote->resources;
+            $this->attributes   = $edamNote->attributes;
         } else {
             $this->attributes = new NoteAttributes();
         }
@@ -212,5 +217,10 @@ class Note
     public function setSaved($value)
     {
         $this->saved = $value;
+    }
+
+    public function getNotebookGuid()
+    {
+        return $this->notebookGuid;
     }
 }

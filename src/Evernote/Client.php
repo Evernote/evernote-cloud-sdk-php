@@ -313,7 +313,23 @@ class Client
         $edamNote->attributes = $note->attributes;
         $edamNote->resources  = $note->resources;
 
-        $uploaded_note = $this->getUserNotestore()->updateNote($this->token, $edamNote);
+        $notebook_guid = $noteToReplace->notebookGuid;
+
+        if ($this->isAppNotebookToken($this->token)) {
+            $notebook = new Notebook();
+        } else {
+            $notebook = $this->getNotebook($notebook_guid);
+        }
+
+        if ($notebook->isLinkedNotebook()) {
+            $noteStore = $this->getNotestore($notebook->linkedNotebook->noteStoreUrl);
+            $token     = $this->getSharedNotebookAuthResult($notebook->linkedNotebook)->authenticationToken;
+        } else {
+            $noteStore = $this->getUserNotestore();
+            $token     = $this->token;
+        }
+
+        $uploaded_note = $noteStore->updateNote($token, $edamNote);
 
         $uploaded_note->content = $note->content;
 
@@ -337,9 +353,10 @@ class Client
         $edamNote = new \EDAM\Types\Note();
 
         if (null !== $notebook_guid) {
-
             $notebook = $this->getNotebook($notebook_guid);
             $edamNote->notebookGuid = $notebook_guid;
+        } elseif ($this->isAppNotebookToken($this->token)) {
+            $notebook = new Notebook();
         } else {
             $notebook = $this->getDefaultNotebook();
         }
@@ -402,7 +419,6 @@ class Client
 
     public function getNotebook($notebook_guid)
     {
-        echo "\nLooking for notebook : " . $notebook_guid;
         try {
             $edamNotebook = $this->getUserNotestore()->getNotebook($this->token, $notebook_guid);
 
