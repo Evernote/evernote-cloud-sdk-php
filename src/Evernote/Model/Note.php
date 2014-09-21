@@ -3,6 +3,7 @@
 namespace Evernote\Model;
 
 use EDAM\Limits\Constant;
+use EDAM\NoteStore\NoteStoreClient;
 use EDAM\Types\NoteAttributes;
 use Evernote\Helper\EnmlConverterInterface;
 
@@ -20,7 +21,6 @@ class Note
     /** @var string  */
     protected $notebookGuid = '';
 
-
     /** @var \Evernote\Model\NoteContentInterface */
     protected $content = '';
 
@@ -32,6 +32,12 @@ class Note
 
     /** @var  boolean */
     protected $saved;
+
+    /** @var  string */
+    protected $authToken;
+
+    /** @var  \EDAM\NoteStore\NoteStoreClient */
+    protected $noteStore;
 
     public function __construct(\EDAM\Types\Note $edamNote = null)
     {
@@ -130,6 +136,11 @@ class Note
         return $this->guid;
     }
 
+    public function setGuid($guid)
+    {
+        $this->guid = $guid;
+    }
+
     public function getAttribute($attribute)
     {
         if (property_exists($this->attributes, $attribute)) {
@@ -223,4 +234,32 @@ class Note
     {
         return $this->notebookGuid;
     }
+
+    public function getAuthToken()
+    {
+        return $this->authToken;
+    }
+
+    public function setAuthToken($authToken)
+    {
+        $this->authToken = $authToken;
+    }
+
+    /**
+     * @param \EDAM\NoteStore\NoteStoreClient $noteStore
+     */
+    public function setNoteStore($noteStore)
+    {
+        $this->noteStore = $noteStore;
+    }
+
+    /**
+     * @return \EDAM\NoteStore\NoteStoreClient
+     */
+    public function getNoteStore()
+    {
+        return $this->noteStore;
+    }
+
+
 }

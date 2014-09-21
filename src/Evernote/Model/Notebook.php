@@ -7,6 +7,9 @@ class Notebook
     /** @var string  */
     protected $name = '';
 
+    /** @var string  */
+    protected $guid;
+
     /** @var bool  */
     protected $allowsWriting = false;
 
@@ -21,6 +24,9 @@ class Notebook
 
     /** @var bool  */
     protected $isDefaultNotebook = false;
+
+    /** @var  string */
+    protected $authToken;
 
     /***********************************/
 
@@ -53,6 +59,16 @@ class Notebook
         if (method_exists($this, $method)) {
 
             return $this->$method();
+        }
+    }
+
+    public function __set($name, $value)
+    {
+        $method = 'set' . ucfirst($name);
+
+        if (method_exists($this, $method)) {
+
+            return $this->$method($value);
         }
     }
 
@@ -94,10 +110,27 @@ class Notebook
         if ($this->sharedNotebook !== null) {
             return $this->sharedNotebook->notebookGuid;
         }
+
+        return $this->guid;
+    }
+
+    public function setGuid($guid)
+    {
+        $this->guid = $guid;
     }
 
     public function getLinkedNotebook()
     {
         return $this->linkedNotebook;
+    }
+
+    public function getAuthToken()
+    {
+        return $this->authToken;
+    }
+
+    public function setAuthToken($authToken)
+    {
+        $this->authToken = $authToken;
     }
 }

@@ -37,6 +37,10 @@ class Client
     /** @var  \EDAM\UserStore\AuthenticationResult */
     protected $businessAuth;
 
+    const PERSONAL_SCOPE = 1;
+
+    const LINKED_SCOPE   = 2;
+
     public function __construct($token = null, $sandbox = true, $advancedClient = null)
     {
         $this->token   = $token;
@@ -211,11 +215,14 @@ class Client
     protected function getNoteBookByLinkedNotebook(LinkedNotebook $linkedNotebook)
     {
         $sharedNoteStore = $this->getNotestore($linkedNotebook->noteStoreUrl);
-        $sharedNotebook = $sharedNoteStore->getSharedNotebookByAuth(
-            $this->getSharedNotebookAuthResult($linkedNotebook)->authenticationToken
-        );
+        $authToken = $this->getSharedNotebookAuthResult($linkedNotebook)->authenticationToken;
+        $sharedNotebook = $sharedNoteStore->getSharedNotebookByAuth($authToken);
 
-        return new Notebook(null, $linkedNotebook, $sharedNotebook);
+        $notebook = new Notebook(null, $linkedNotebook, $sharedNotebook);
+
+        $notebook->authToken = $authToken;
+
+        return $notebook;
     }
     
     
@@ -313,23 +320,7 @@ class Client
         $edamNote->attributes = $note->attributes;
         $edamNote->resources  = $note->resources;
 
-        $notebook_guid = $noteToReplace->notebookGuid;
-
-        if ($this->isAppNotebookToken($this->token)) {
-            $notebook = new Notebook();
-        } else {
-            $notebook = $this->getNotebook($notebook_guid);
-        }
-
-        if ($notebook->isLinkedNotebook()) {
-            $noteStore = $this->getNotestore($notebook->linkedNotebook->noteStoreUrl);
-            $token     = $this->getSharedNotebookAuthResult($notebook->linkedNotebook)->authenticationToken;
-        } else {
-            $noteStore = $this->getUserNotestore();
-            $token     = $this->token;
-        }
-
-        $uploaded_note = $noteStore->updateNote($token, $edamNote);
+        $uploaded_note = $noteToReplace->noteStore->updateNote($noteToReplace->authToken, $edamNote);
 
         $uploaded_note->content = $note->content;
 
@@ -340,10 +331,10 @@ class Client
         return $en_note;
     }
 
-    public function uploadNote(Note $note, $notebook_guid = null)
+    public function uploadNote(Note $note, Notebook $notebook = null)
     {
         if ($this->isAppNotebookToken($this->token)) {
-            $notebook_guid = null;
+            $notebook = new Notebook();
         }
 
         if (true === $note->getSaved()) {
@@ -352,43 +343,65 @@ class Client
 
         $edamNote = new \EDAM\Types\Note();
 
-        if (null !== $notebook_guid) {
-            $notebook = $this->getNotebook($notebook_guid);
-            $edamNote->notebookGuid = $notebook_guid;
-        } elseif ($this->isAppNotebookToken($this->token)) {
-            $notebook = new Notebook();
-        } else {
-            $notebook = $this->getDefaultNotebook();
-        }
-
-        if ($notebook->isLinkedNotebook()) {
-            $noteStore = $this->getNotestore($notebook->linkedNotebook->noteStoreUrl);
-            $token     = $this->getSharedNotebookAuthResult($notebook->linkedNotebook)->authenticationToken;
-        } else {
-            $noteStore = $this->getUserNotestore();
-            $token     = $this->token;
-        }
-
         $edamNote->title      = $note->title;
         $edamNote->content    = $note->content;
         $edamNote->attributes = $note->attributes;
         $edamNote->resources  = $note->resources;
 
-        $uploaded_note = $noteStore->createNote($token, $edamNote);
+        if (null !== $notebook && null !== $notebook->guid) {
+            $edamNote->notebookGuid = $notebook->guid;
+        }
+
+        try {
+            $uploaded_note = $this->getUserNotestore()->createNote($this->token, $edamNote);
+            $noteStore     = $this->getUserNotestore();
+            $token         = $this->token;
+        } catch (EDAMNotFoundException $e) {
+            $notebook = $this->getNotebook($notebook->guid, self::LINKED_SCOPE);
+            if (null === $notebook) {
+                throw $e;
+            }
+
+            if ($notebook->isLinkedNotebook()) {
+                $noteStore = $this->getNotestore($notebook->linkedNotebook->noteStoreUrl);
+                $token     = $notebook->authToken;
+
+                $uploaded_note = $noteStore->createNote($token, $edamNote);
+            }
+        }
 
         $uploaded_note->content = $note->content;
 
-        $en_note = new Note($uploaded_note);
+        $note = $this->getNoteInstance($uploaded_note, $noteStore, $token);
 
-        $en_note->setSaved(true);
+        $note->setSaved(true);
 
-        return $en_note;
-
+        return $note;
     }
 
     public function deleteNote(Note $note)
     {
-        return $this->getUserNotestore()->deleteNote($this->token, $note->guid);
+        if (null === $note->guid) {
+
+            return false;
+        }
+
+        if (null !== $note->noteStore && null !== $note->authToken) {
+            $note->noteStore->deleteNote($note->authToken, $note->guid);
+
+            return true;
+        }
+
+        try {
+            $this->getUserNotestore()->deleteNote($this->token, $note->guid);
+
+            return true;
+        } catch (EDAMNotFoundException $e) {
+            $note = $this->getNote($note->guid);
+            $this->deleteNote($note);
+        }
+
+        return false;
     }
 
     public function shareNote(Note $note)
@@ -402,9 +415,11 @@ class Client
 
     public function getNote($guid)
     {
-        $note = $this->getUserNotestore()->getNote($this->token, $guid, true, true, false, false);
+        $edam_note = $this->getUserNotestore()->getNote($this->token, $guid, true, true, false, false);
 
-        return new Note($note);
+        $note = $this->getNoteInstance($edam_note, $this->getUserNotestore(), $this->token);
+
+        return $note;
     }
 
     protected function getShareUrl($guid, $shardId, $shareKey, $serviceHost)
@@ -417,14 +432,19 @@ class Client
         return strpos($token, ':B=') !== false;
     }
 
-    public function getNotebook($notebook_guid)
+    public function getNotebook($notebook_guid, $scope = null)
     {
-        try {
-            $edamNotebook = $this->getUserNotestore()->getNotebook($this->token, $notebook_guid);
+        if (self::PERSONAL_SCOPE === $scope) {
+            try {
+                $edamNotebook = $this->getUserNotestore()->getNotebook($this->token, $notebook_guid);
 
-            return new Notebook($edamNotebook);
-        } catch (EDAMNotFoundException $e) {
-            // might be a linkedNotebook
+                return new Notebook($edamNotebook);
+            } catch (EDAMNotFoundException $e) {
+                return null;
+            }
+        }
+
+        if (self::LINKED_SCOPE === $scope) {
             $linkedNotebooks = $this->listLinkedNotebooks();
 
             foreach ($linkedNotebooks as $linkedNotebook) {
@@ -438,13 +458,25 @@ class Client
                     return $sharedNotebook;
                 }
             }
-        }
 
-        return null;
+            return null;
+        }
     }
 
     public function getDefaultNotebook()
     {
         return new Notebook($this->getUserNotestore()->getDefaultNotebook($this->token));
     }
+
+    protected function getNoteInstance(\EDAM\Types\Note $edamNote = null, $noteStore = null, $token = null)
+    {
+        $note = new Note($edamNote);
+
+        $note->authToken = $token;
+
+        $note->noteStore = $noteStore;
+
+        return $note;
+    }
+
 } 
