@@ -95,4 +95,9 @@ class Notebook
             return $this->sharedNotebook->notebookGuid;
         }
     }
+
+    public function getLinkedNotebook()
+    {
+        return $this->linkedNotebook;
+    }
 }

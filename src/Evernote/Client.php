@@ -2,6 +2,7 @@
 
 namespace Evernote;
 
+use EDAM\Error\EDAMNotFoundException;
 use EDAM\Error\EDAMUserException;
 use EDAM\NoteStore\NoteFilter;
 use EDAM\NoteStore\NotesMetadataResultSpec;
@@ -9,6 +10,7 @@ use EDAM\Types\LinkedNotebook;
 use Evernote\Model\Note;
 use Evernote\Model\Notebook;
 use ohmy\Auth1;
+
 class Client
 {
     /** @var  \Evernote\AdvancedClient */
@@ -200,11 +202,18 @@ class Client
         return $resultNotebooks;
     }
 
+    protected function getSharedNotebookAuthResult(LinkedNotebook $linkedNotebook)
+    {
+        $sharedNoteStore = $this->getNotestore($linkedNotebook->noteStoreUrl);
+        return $sharedNoteStore->authenticateToSharedNotebook($linkedNotebook->shareKey, $this->token);
+    }
+
     protected function getNoteBookByLinkedNotebook(LinkedNotebook $linkedNotebook)
     {
         $sharedNoteStore = $this->getNotestore($linkedNotebook->noteStoreUrl);
-        $authResult = $sharedNoteStore->authenticateToSharedNotebook($linkedNotebook->shareKey, $this->token);
-        $sharedNotebook = $sharedNoteStore->getSharedNotebookByAuth($authResult->authenticationToken);
+        $sharedNotebook = $sharedNoteStore->getSharedNotebookByAuth(
+            $this->getSharedNotebookAuthResult($linkedNotebook)->authenticationToken
+        );
 
         return new Notebook(null, $linkedNotebook, $sharedNotebook);
     }
@@ -317,6 +326,10 @@ class Client
 
     public function uploadNote(Note $note, $notebook_guid = null)
     {
+        if ($this->isAppNotebookToken($this->token)) {
+            $notebook_guid = null;
+        }
+
         if (true === $note->getSaved()) {
             return $this->replaceNote($note, $note);
         }
@@ -324,7 +337,19 @@ class Client
         $edamNote = new \EDAM\Types\Note();
 
         if (null !== $notebook_guid) {
+
+            $notebook = $this->getNotebook($notebook_guid);
             $edamNote->notebookGuid = $notebook_guid;
+        } else {
+            $notebook = $this->getDefaultNotebook();
+        }
+
+        if ($notebook->isLinkedNotebook()) {
+            $noteStore = $this->getNotestore($notebook->linkedNotebook->noteStoreUrl);
+            $token     = $this->getSharedNotebookAuthResult($notebook->linkedNotebook)->authenticationToken;
+        } else {
+            $noteStore = $this->getUserNotestore();
+            $token     = $this->token;
         }
 
         $edamNote->title      = $note->title;
@@ -332,7 +357,7 @@ class Client
         $edamNote->attributes = $note->attributes;
         $edamNote->resources  = $note->resources;
 
-        $uploaded_note = $this->getUserNotestore()->createNote($this->token, $edamNote);
+        $uploaded_note = $noteStore->createNote($token, $edamNote);
 
         $uploaded_note->content = $note->content;
 
@@ -370,4 +395,40 @@ class Client
         return $serviceHost . "/shard/" . $shardId . "/sh/" . $guid . "/" . $shareKey;
     }
 
+    public function isAppNotebookToken($token)
+    {
+        return strpos($token, ':B=') !== false;
+    }
+
+    public function getNotebook($notebook_guid)
+    {
+        echo "\nLooking for notebook : " . $notebook_guid;
+        try {
+            $edamNotebook = $this->getUserNotestore()->getNotebook($this->token, $notebook_guid);
+
+            return new Notebook($edamNotebook);
+        } catch (EDAMNotFoundException $e) {
+            // might be a linkedNotebook
+            $linkedNotebooks = $this->listLinkedNotebooks();
+
+            foreach ($linkedNotebooks as $linkedNotebook) {
+                try {
+                    $sharedNotebook = $this->getNoteBookByLinkedNotebook($linkedNotebook);
+                } catch (EDAMUserException $e) {
+                    // No right on this notebook.
+                    continue;
+                }
+                if ($sharedNotebook->guid === $notebook_guid) {
+                    return $sharedNotebook;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public function getDefaultNotebook()
+    {
+        return new Notebook($this->getUserNotestore()->getDefaultNotebook($this->token));
+    }
 } 
