@@ -1,5 +1,5 @@
 {
-    "name": "evernote/evernote-cloud",
+    "name": "evernote/evernote-cloud-sdk-php",
     "description": "Evernote Cloud SDK for PHP",
     "keywords": [
         "evernote",
