@@ -386,6 +386,7 @@ class Client
             return false;
         }
 
+        // we have the credentials
         if (null !== $note->noteStore && null !== $note->authToken) {
             $note->noteStore->deleteNote($note->authToken, $note->guid);
 
@@ -393,15 +394,20 @@ class Client
         }
 
         try {
+            // We try to delete it with the personal credentials
             $this->getUserNotestore()->deleteNote($this->token, $note->guid);
 
             return true;
         } catch (EDAMNotFoundException $e) {
-            $note = $this->getNote($note->guid);
-            $this->deleteNote($note);
-        }
+            // The note's not in a personal notebook. We'll need to find it
+            $note = $this->getNote($note->guid, self::LINKED_SCOPE);
 
-        return false;
+            if (null !== $note) {
+                return $this->deleteNote($note);
+            }
+
+            return false;
+        }
     }
 
     public function shareNote(Note $note)
@@ -413,13 +419,45 @@ class Client
         return $this->getShareUrl($note->getGuid(), $shardId, $shareKey, $this->getAdvancedClient()->getEndpoint());
     }
 
-    public function getNote($guid)
+    public function getNote($guid, $scope = null)
     {
-        $edam_note = $this->getUserNotestore()->getNote($this->token, $guid, true, true, false, false);
+        if (null === $scope || self::PERSONAL_SCOPE === $scope) {
+            try {
+                $edam_note = $this->getUserNotestore()->getNote($this->token, $guid, true, true, false, false);
 
-        $note = $this->getNoteInstance($edam_note, $this->getUserNotestore(), $this->token);
+                return $this->getNoteInstance($edam_note, $this->getUserNotestore(), $this->token);
+            } catch (EDAMNotFoundException $e) {
+                if (self::PERSONAL_SCOPE === $scope) {
+                    return null;
+                }
+            }
+        }
 
-        return $note;
+        if (null === $scope || self::LINKED_SCOPE === $scope) {
+            $linkedNotebooks = $this->listLinkedNotebooks();
+
+            foreach ($linkedNotebooks as $linkedNotebook) {
+                try {
+                    $sharedNoteStore = $this->getNotestore($linkedNotebook->noteStoreUrl);
+                    $authToken = $this->getSharedNotebookAuthResult($linkedNotebook)->authenticationToken;
+
+                    $edam_note = $sharedNoteStore->getNote($authToken, $guid, true, true, false, false);
+
+                    return $this->getNoteInstance($edam_note, $sharedNoteStore, $authToken);
+
+                } catch (EDAMUserException $e) {
+                    // No right on this notebook.
+                    continue;
+                } catch (EDAMNotFoundException $e) {
+                    // Note not found
+                    continue;
+                }
+
+            }
+
+            return null;
+        }
+
     }
 
     protected function getShareUrl($guid, $shardId, $shareKey, $serviceHost)
@@ -440,7 +478,9 @@ class Client
 
                 return new Notebook($edamNotebook);
             } catch (EDAMNotFoundException $e) {
-                return null;
+                if (self::PERSONAL_SCOPE === $scope) {
+                    return null;
+                }
             }
         }
 
@@ -479,4 +519,4 @@ class Client
         return $note;
     }
 
-} 
+}
