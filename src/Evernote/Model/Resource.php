@@ -4,6 +4,7 @@ namespace Evernote\Model;
 
 use EDAM\Types\Data;
 use EDAM\Types\ResourceAttributes;
+use Evernote\File\File;
 use Evernote\File\FileInterface;
 
 class Resource
@@ -20,13 +21,13 @@ class Resource
 
     protected $attributes;
 
-    public function __construct(FileInterface $file)
+    public function __construct($path, $mime, $width = null, $height = null)
     {
-        $this->file = $file;
+        $this->file = new File($path, $mime, $width, $height);
 
         $file_content = '';
-        while (!$file->eof()) {
-            $file_content .= $file->fgets();
+        while (!$this->file->eof()) {
+            $file_content .= $this->file->fgets();
         }
 
         $this->hash = md5($file_content, 0);
@@ -37,10 +38,10 @@ class Resource
         $data->body     = $file_content;
 
         $resource                       = new \EDAM\Types\Resource();
-        $resource->mime                 = $file->getMimeType();
+        $resource->mime                 = $this->file->getMimeType();
         $resource->data                 = $data;
         $resource->attributes           = new ResourceAttributes();
-        $resource->attributes->fileName = $file->getFilename();
+        $resource->attributes->fileName = $this->file->getFilename();
 
         $this->edamResource = $resource;
         $this->mime         = $resource->mime;
