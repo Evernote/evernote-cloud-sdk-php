@@ -412,11 +412,36 @@ class Client
 
     public function shareNote(Note $note)
     {
-        $shareKey = $this->getUserNotestore()->shareNote($this->token, $note->getGuid());
+        if (null === $note->guid) {
 
-        $shardId = $this->getUser()->shardId;
+            return null;
+        }
 
-        return $this->getShareUrl($note->getGuid(), $shardId, $shareKey, $this->getAdvancedClient()->getEndpoint());
+        // we have the credentials
+        if (null !== $note->noteStore && null !== $note->authToken) {
+            $shareKey = $note->noteStore->shareNote($note->authToken, $note->guid);
+            $shardId  = $this->getShardIdFromToken($note->authToken);
+
+            return $this->getShareUrl($note->guid, $shardId, $shareKey, $this->getAdvancedClient()->getEndpoint());
+        }
+
+        try {
+            // We don't have credentials so we assume it's a personal note
+            return $this->getUserNotestore()->deleteNote($this->token, $note->guid);
+
+        } catch (EDAMNotFoundException $e) {
+            // The note's not in a personal notebook. We'll need to find it
+            $note = $this->getNote($note->guid, self::LINKED_SCOPE);
+
+            if (null !== $note) {
+                $shareKey = $note->noteStore->shareNote($note->authToken, $note->guid);
+                $shardId  = $this->getShardIdFromToken($note->authToken);
+
+                return $this->getShareUrl($note->guid, $shardId, $shareKey, $this->getAdvancedClient()->getEndpoint());
+            }
+
+            return null;
+        }
     }
 
     public function getNote($guid, $scope = null)
@@ -517,6 +542,17 @@ class Client
         $note->noteStore = $noteStore;
 
         return $note;
+    }
+
+    protected function getShardIdFromToken($token)
+    {
+        $result = preg_match('/:?S=(s[0-9]+):?/', $token, $matches);
+
+        if ($result === 1 && array_key_exists(1, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 
 }
