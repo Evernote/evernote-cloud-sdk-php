@@ -434,7 +434,7 @@ class Client
 
     public function getNotebook($notebook_guid, $scope = null)
     {
-        if (self::PERSONAL_SCOPE === $scope) {
+        if (null === $scope || self::PERSONAL_SCOPE === $scope) {
             try {
                 $edamNotebook = $this->getUserNotestore()->getNotebook($this->token, $notebook_guid);
 
@@ -444,7 +444,7 @@ class Client
             }
         }
 
-        if (self::LINKED_SCOPE === $scope) {
+        if (null === $scope || self::LINKED_SCOPE === $scope) {
             $linkedNotebooks = $this->listLinkedNotebooks();
 
             foreach ($linkedNotebooks as $linkedNotebook) {
