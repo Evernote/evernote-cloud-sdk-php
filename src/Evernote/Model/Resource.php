@@ -8,6 +8,8 @@ use Evernote\File\FileInterface;
 
 class Resource
 {
+    protected $file;
+
     protected $edamResource;
 
     protected $hash;
@@ -20,17 +22,7 @@ class Resource
 
     public function __construct(FileInterface $file)
     {
-        /**
-         *
-         *         image/gif
-        image/jpeg
-        image/png
-        audio/wav
-        audio/mpeg
-        audio/amr
-        application/pdf
-         *
-         */
+        $this->file = $file;
 
         $file_content = '';
         while (!$file->eof()) {
@@ -61,5 +53,23 @@ class Resource
         if (property_exists($this, $property)) {
             return $this->$property;
         }
+    }
+
+    public function getEnmlMediaTag()
+    {
+        $tag = '<en-media type="%s" hash="%s"%s%s/>';
+
+        $width  = '';
+        $height = '';
+
+        if (null !== $this->file->getWidth()) {
+            $width = ' width="' . $this->file->getWidth() . '"';
+        }
+
+        if (null !== $this->file->getHeight()) {
+            $width = ' height="' . $this->file->getHeight() . '"';
+        }
+
+        return sprintf($tag, $this->mime, $this->hash, $width, $height);
     }
 } 
