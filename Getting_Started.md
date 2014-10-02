@@ -40,6 +40,7 @@ Getting an OAuth token
 ----------------------
 
 The OAuth process does not require the php-oauth extension.
+The only requirement is to have sessions enabled to keep data during the oauth process.
 
 ``` php
 <?php
