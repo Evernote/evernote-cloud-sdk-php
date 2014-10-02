@@ -33,11 +33,11 @@ require_once 'src/autoload.php';
 
 Note for users of the 1.x SDK for PHP
 -------------------------------------
-This SDK is a complete revision of the previous Evernote SDK for PHP. (Here is where we should link to a migration guide)
+This SDK is a complete revision of the previous Evernote SDK for PHP. (Migration guide to come)
 
 FAQ
 ---
 
 #### Where can I find out more about the Evernote API?
 
-Please check out the [Evernote Developers Portal](dev.evernote).
+Please check out the [Evernote Developers Portal](https://dev.evernote.com).
