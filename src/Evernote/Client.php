@@ -244,7 +244,7 @@ class Client
         return $this->getUserNotestore()->listLinkedNotebooks($this->token);
     }
 
-    protected function getUserNotestore()
+    public function getUserNotestore()
     {
         if (null === $this->userNoteStore) {
             $noteStoreUrl =
