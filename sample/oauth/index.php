@@ -3,7 +3,7 @@ require __DIR__ . '/../../vendor/autoload.php';
 
 /** Understanding SANDBOX vs PRODUCTION Environments
  *
- * The Evernote API 'Sandbox' environment -> SANDBOX.EVERNOTE.COM 
+ * The Evernote API 'Sandbox' environment -> SANDBOX.EVERNOTE.COM
  *    - Create a sample Evernote account at https://sandbox.evernote.com
  * 
  * The Evernote API 'Production' Environment -> WWW.EVERNOTE.COM
@@ -20,10 +20,15 @@ $key      = '%key%';
 $secret   = '%secret%';
 $callback = 'http://host/pathto/evernote-cloud-sdk-php/sample/oauth/index.php';
 
-$oauth_data  = $oauth_handler->authorize($key, $secret, $callback);
+try {
+    $oauth_data  = $oauth_handler->authorize($key, $secret, $callback);
 
-echo "\nOauth Token : " . $oauth_data['oauth_token'];
+    echo "\nOauth Token : " . $oauth_data['oauth_token'];
 
-// Now you can use this token to call the api
+    // Now you can use this token to call the api
+    $client = new \Evernote\Client($oauth_data['oauth_token']);
 
-$client = new \Evernote\Client($oauth_data['oauth_token']);
+} catch (Evernote\Exception\AuthorizationDeniedException $e) {
+    //If the user decline the authorization, an exception is thrown.
+    echo "Declined";
+}
