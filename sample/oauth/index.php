@@ -1,7 +1,17 @@
 <?php
 require __DIR__ . '/../../vendor/autoload.php';
 
-//set this to false to use in production
+/** Understanding SANDBOX vs PRODUCTION Environments
+ *
+ * The Evernote API 'Sandbox' environment -> SANDBOX.EVERNOTE.COM 
+ *    - Create a sample Evernote account at https://sandbox.evernote.com
+ * 
+ * The Evernote API 'Production' Environment -> WWW.EVERNOTE.COM
+ *    - Activate your Sandboxed API key for production access at https://dev.evernote.com/support/
+ * 
+ * For testing, set $sandbox to true, for production, set $sandbox to false
+ * 
+ */
 $sandbox = true;
 
 $oauth_handler = new \Evernote\Auth\OauthHandler($sandbox);
