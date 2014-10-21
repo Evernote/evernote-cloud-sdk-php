@@ -21,15 +21,14 @@ class Resource
 
     protected $attributes;
 
-    public function __construct($path, $mime, $width = null, $height = null)
+    public function __construct($file, $mime = null, $width = null, $height = null)
     {
-        $this->file = new File($path, $mime, $width, $height);
-
-        $file_content = '';
-        while (!$this->file->eof()) {
-            $file_content .= $this->file->fgets();
+        $this->file = $file;
+        if (!$file instanceof FileInterface) {
+            $this->file = new File($file, $mime, $width, $height);
         }
 
+        $file_content = $this->file->getContent();
         $this->hash = md5($file_content, 0);
 
         $data           = new Data();
