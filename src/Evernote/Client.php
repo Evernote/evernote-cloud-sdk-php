@@ -3,6 +3,7 @@
 namespace Evernote;
 
 use EDAM\Error\EDAMNotFoundException;
+use EDAM\Error\EDAMSystemException;
 use EDAM\Error\EDAMUserException;
 use EDAM\NoteStore\NoteFilter;
 use EDAM\NoteStore\NotesMetadataResultSpec;
@@ -112,7 +113,13 @@ class Client
         /**
          * 1. Get all of the user's personal notebooks.
          */
-        $personalNotebooks = $this->listPersonalNotebooks();
+        try {
+            $personalNotebooks = $this->listPersonalNotebooks();
+        } catch (EDAMUserException $e) {
+            $personalNotebooks = array();
+        } catch (EDAMSystemException $e) {
+            $personalNotebooks = array();
+        }
 
         $resultNotebooks  = array();
         $guidsToNotebooks = array();
@@ -125,7 +132,13 @@ class Client
         /**
          * Get shared notebooks and flag the matching notebook as shared
          */
-        $sharedNotebooks = $this->listSharedNotebooks();
+        try {
+            $sharedNotebooks = $this->listSharedNotebooks();
+        } catch (EDAMUserException $e) {
+            $sharedNotebooks = array();
+        } catch (EDAMSystemException $e) {
+            $sharedNotebooks = array();
+        }
 
         foreach ($sharedNotebooks as $sharedNotebook) {
             $guidsToNotebooks[$sharedNotebook->notebookGuid]->isShared = true;
@@ -138,6 +151,8 @@ class Client
         try {
             $linkedNotebooks = $this->listLinkedNotebooks();
         } catch (EDAMUserException $e) {
+            $linkedNotebooks = array();
+        } catch (EDAMSystemException $e) {
             $linkedNotebooks = array();
         }
 
