@@ -10,7 +10,6 @@ use EDAM\NoteStore\NotesMetadataResultSpec;
 use EDAM\Types\LinkedNotebook;
 use Evernote\Model\Note;
 use Evernote\Model\Notebook;
-use ohmy\Auth1;
 
 class Client
 {
