@@ -28,6 +28,6 @@ $note         = new \Evernote\Model\Note();
 $note->title  = 'Test note';
 $note->content = new \Evernote\Model\PlainTextNoteContent('Some plain text content.');
 
-$uploaded_note = $client->uploadNote($note, $notebook);
+$uploaded_note = $client->uploadNote($note);
 
 $client->shareNote($uploaded_note);
