@@ -422,7 +422,11 @@ class Client
             }
 
             return false;
+         } catch (EDAMUserException $e) {
+            // You don't have permission to delete this note.
+            return false;
         }
+
     }
 
     public function shareNote(Note $note)
