@@ -381,6 +381,8 @@ class Client
                 $noteStore = $this->getNotestore($notebook->linkedNotebook->noteStoreUrl);
                 $token     = $notebook->authToken;
 
+                $edamNote->notebookGuid = $notebook->guid;
+
                 $uploaded_note = $noteStore->createNote($token, $edamNote);
             }
         }
@@ -534,6 +536,10 @@ class Client
             foreach ($linkedNotebooks as $linkedNotebook) {
                 try {
                     $sharedNotebook = $this->getNoteBookByLinkedNotebook($linkedNotebook);
+
+                    if ($this->isAppNotebookToken($this->token)) {
+                        return $sharedNotebook;
+                    }
                 } catch (EDAMUserException $e) {
                     // No right on this notebook.
                     continue;
