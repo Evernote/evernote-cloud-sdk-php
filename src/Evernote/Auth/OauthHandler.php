@@ -12,11 +12,14 @@ class OauthHandler
 
     protected $token_secret;
 
+    protected $supportLinkedSandbox;
+
     protected $params = array();
 
-    public function __construct($sandbox = true)
+    public function __construct($sandbox = true, $supportLinkedSandbox = false)
     {
-        $this->sandbox      = $sandbox;
+        $this->sandbox              = $sandbox;
+        $this->supportLinkedSandbox = $supportLinkedSandbox;
 
         $this->params['oauth_callback']         = null;
         $this->params['oauth_consumer_key']     = null;
@@ -48,7 +51,13 @@ class OauthHandler
 
             $_SESSION['oauth_token_secret'] = $temporaryCredentials['oauth_token_secret'];;
 
-            $authorizationUrl = 'Location: ' . $this->getBaseUrl('OAuth.action?oauth_token=') . $temporaryCredentials['oauth_token'];
+            $authorizationUrl = 'Location: '
+                . $this->getBaseUrl('OAuth.action?oauth_token=')
+                . $temporaryCredentials['oauth_token'];
+
+            if ($this->supportLinkedSandbox) {
+                $authorizationUrl .= '&supportLinkedSandbox=true';
+            }
 
             header($authorizationUrl);
 
