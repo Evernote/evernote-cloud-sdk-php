@@ -5,8 +5,6 @@ namespace Evernote;
 use EDAM\Error\EDAMNotFoundException;
 use EDAM\Error\EDAMSystemException;
 use EDAM\Error\EDAMUserException;
-use EDAM\NoteStore\NoteFilter;
-use EDAM\NoteStore\NotesMetadataResultSpec;
 use EDAM\Types\LinkedNotebook;
 use Evernote\Model\Note;
 use Evernote\Model\Notebook;
@@ -552,11 +550,6 @@ class Client
         }
     }
 
-    public function getDefaultNotebook()
-    {
-        return new Notebook($this->getUserNotestore()->getDefaultNotebook($this->token));
-    }
-
     protected function getNoteInstance(\EDAM\Types\Note $edamNote = null, $noteStore = null, $token = null)
     {
         $note = new Note($edamNote);
@@ -578,5 +571,4 @@ class Client
 
         return null;
     }
-
 }
