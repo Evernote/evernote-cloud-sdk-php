@@ -21,10 +21,6 @@ class AdvancedClient
     {
         $this->sandbox             = $sandbox;
 
-        if (null === $thriftClientFactory) {
-            $thriftClientFactory = new ThriftClientFactory();
-        }
-
         $this->thriftClientFactory = $thriftClientFactory;
     }
 
@@ -54,9 +50,18 @@ class AdvancedClient
         return $url;
     }
 
+    public function getThriftClientFactory()
+    {
+        if (null === $this->thriftClientFactory) {
+            $this->thriftClientFactory = new ThriftClientFactory();
+        }
+
+        return $this->thriftClientFactory;
+    }
+    
     protected function getThriftClient($type, $url)
     {
-        return $this->thriftClientFactory->createThriftClient($type, $url);
+        return $this->getThriftClientFactory()->createThriftClient($type, $url);
     }
 
 }
