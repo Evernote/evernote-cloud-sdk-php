@@ -43,7 +43,6 @@ class ExceptionFactory
     public static function create(\Exception $e)
     {
         if ($e instanceof EDAMUserException) {
-            var_dump($e->errorCode, $e->parameter);
             if (array_key_exists($e->errorCode, self::$errorCodeMap)) {
                 $class = __NAMESPACE__ . '\\' . self::$errorCodeMap[$e->errorCode] . 'Exception';
 
