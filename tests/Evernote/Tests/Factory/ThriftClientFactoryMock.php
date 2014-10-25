@@ -37,14 +37,16 @@ class ThriftClient
 
     public function __call($name, $args)
     {
-        $file = __DIR__ . '/../../../fixtures/' . $this->type . sha1($this->token . $this->url . $name . implode('', $args));
-
-        echo $file;
+        $file = __DIR__ . '/../../../fixtures/' . $this->type . sha1($this->url . $name . implode('', $args));
 
         if ($this->useFixtures && is_file($file) && is_readable($file)) {
             $response = unserialize(file_get_contents($file));
 
             if (!empty($response)) {
+                if ($response instanceof \Exception) {
+                    throw $response;
+                }
+
                 return $response;
             }
         }
@@ -52,10 +54,16 @@ class ThriftClient
         $realThriftClientFactory = new ThriftClientFactory();
         $client = $realThriftClientFactory->createThriftClient($this->type, $this->url);
 
-        $response = call_user_func_array(array($client, $name), $args);
-
-        file_put_contents($file, serialize($response));
+        try {
+            $response = call_user_func_array(array($client, $name), $args);
+            file_put_contents($file, serialize($response));
+        } catch (\Exception $e) {
+            file_put_contents($file, serialize($e));
+            throw $e;
+        }
 
         return $response;
+
+
     }
 }

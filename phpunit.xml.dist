@@ -10,6 +10,11 @@
          syntaxCheck="false"
          bootstrap="./tests/bootstrap.php"
         >
+    <php>
+        <!-- TOKENS -->
+        <server name="BUSINESS_TOKEN" value="" />
+        <server name="FREE_TOKEN" value="" />
+    </php>
     <testsuites>
         <testsuite name="Evernote Test Suite">
             <directory>./tests/</directory>

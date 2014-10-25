@@ -6,6 +6,7 @@ use EDAM\Error\EDAMNotFoundException;
 use EDAM\Error\EDAMSystemException;
 use EDAM\Error\EDAMUserException;
 use EDAM\Types\LinkedNotebook;
+use Evernote\Exception\ExceptionFactory;
 use Evernote\Model\Note;
 use Evernote\Model\Notebook;
 
@@ -39,43 +40,66 @@ class Client
 
     const LINKED_SCOPE   = 2;
 
+    /**
+     * @param null $token
+     * @param bool $sandbox
+     * @param null $advancedClient
+     */
     public function __construct($token = null, $sandbox = true, $advancedClient = null)
     {
-        $this->token   = $token;
-        $this->sandbox = $sandbox;
-
-        if (null === $advancedClient) {
-            $advancedClient = new AdvancedClient($this->sandbox);
-        }
-
+        $this->token          = $token;
+        $this->sandbox        = $sandbox;
         $this->advancedClient = $advancedClient;
     }
 
+    /**
+     * @return \EDAM\Types\User
+     * @throws \Exception
+     */
     public function getUser()
     {
         if (null === $this->user) {
-            $this->user = $this->getAdvancedClient()
-                ->getUserStore()->getUser($this->token);
+            try {
+                $this->user = $this->getAdvancedClient()
+                    ->getUserStore()->getUser($this->token);
+            } catch (\Exception $e) {
+                throw ExceptionFactory::create($e);
+            }
         }
 
         return $this->user;
     }
 
+    /**
+     * @return bool
+     */
     public function isBusinessUser()
     {
         return $this->getUser()->accounting->businessId !== null;
     }
 
-    public function getBusinessAuth()
+    /**
+     * @return \EDAM\UserStore\AuthenticationResult
+     * @throws \Exception
+     */
+    protected function getBusinessAuth()
     {
         if (null === $this->businessAuth) {
-            $this->businessAuth =
-                $this->getAdvancedClient()->getUserStore()->authenticateToBusiness($this->token);
+            try {
+                $this->businessAuth =
+                    $this->getAdvancedClient()
+                        ->getUserStore()->authenticateToBusiness($this->token);
+            } catch (\Exception $e) {
+                throw ExceptionFactory::create($e);
+            }
         }
 
         return $this->businessAuth;
     }
 
+    /**
+     * @return string
+     */
     public function getBusinessToken()
     {
         if (null === $this->businessToken) {
@@ -288,6 +312,10 @@ class Client
      */
     public function getAdvancedClient()
     {
+        if (null === $this->advancedClient) {
+            $this->advancedClient = new AdvancedClient($this->sandbox);
+        }
+
         return $this->advancedClient;
     }
 

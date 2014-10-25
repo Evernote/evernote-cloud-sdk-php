@@ -37,7 +37,8 @@ class ExceptionFactory
     );
 
     protected static $messageMap = array(
-        'shareKey' => 'InvalidShareKey'
+        'shareKey'            => 'InvalidShareKey',
+        'authenticationToken' => 'InvalidAuth',
     );
 
     public static function create(\Exception $e)
