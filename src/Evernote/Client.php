@@ -387,6 +387,7 @@ class Client
         $edamNote->content    = $note->content;
         $edamNote->attributes = $note->attributes;
         $edamNote->resources  = $note->resources;
+        $edamNote->tagNames   = $note->tagNames;
 
         if (null !== $notebook && null !== $notebook->guid) {
             $edamNote->notebookGuid = $notebook->guid;

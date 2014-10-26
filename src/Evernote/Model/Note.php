@@ -19,6 +19,9 @@ class Note
     protected $title = '';
 
     /** @var string  */
+    protected $tagNames = array();
+
+    /** @var string  */
     protected $notebookGuid = '';
 
     /** @var \Evernote\Model\NoteContentInterface */
@@ -49,6 +52,7 @@ class Note
             $this->content      = new EnmlNoteContent($edamNote->content);
             $this->resources    = $edamNote->resources;
             $this->attributes   = $edamNote->attributes;
+            $this->tagNames     = $edamNote->tagNames;
         } else {
             $this->attributes = new NoteAttributes();
         }
@@ -243,6 +247,16 @@ class Note
     public function setAuthToken($authToken)
     {
         $this->authToken = $authToken;
+    }
+
+    public function setTagNames(array $tagNames)
+    {
+        $this->tagNames = $tagNames;
+    }
+
+    public function getTagNames()
+    {
+        return $this->tagNames;
     }
 
     /**

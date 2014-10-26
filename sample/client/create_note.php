@@ -27,6 +27,7 @@ $client = new \Evernote\Client($token, $sandbox);
 $note         = new \Evernote\Model\Note();
 $note->title  = 'Test note';
 $note->content = new \Evernote\Model\PlainTextNoteContent('Some plain text content.');
+$note->tagNames = array('tag1', 'tag2');
 
 /**
  * The second parameter $notebook is optionnal.
