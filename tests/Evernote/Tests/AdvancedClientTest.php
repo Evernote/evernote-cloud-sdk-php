@@ -53,6 +53,15 @@ class AdvancedClientTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('EDAM\NoteStore\NoteStoreClient', $noteStore);
     }
 
+    public function test_getNoteStore_noParams_shouldReturnANoteStoreClientInstance()
+    {
+        $advancedClient = $this->getAdvancedClient();
+
+        $noteStore = $advancedClient->getNoteStore();
+
+        $this->assertInstanceOf('EDAM\NoteStore\NoteStoreClient', $noteStore);
+    }
+
     public function test_getUserStore_shouldReturnAUserStoreClientInstance()
     {
         $advancedClient = $this->getAdvancedClient();

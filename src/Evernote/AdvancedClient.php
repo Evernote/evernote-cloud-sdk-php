@@ -47,8 +47,12 @@ class AdvancedClient
      * @param $noteStoreUrl
      * @return mixed
      */
-    public function getNoteStore($noteStoreUrl)
+    public function getNoteStore($noteStoreUrl = null)
     {
+        if (null === $noteStoreUrl) {
+            return $this->getUserNoteStore();
+        }
+
         return $this->getThriftClient('note', $noteStoreUrl);
     }
 
