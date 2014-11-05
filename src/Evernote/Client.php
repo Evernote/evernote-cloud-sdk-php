@@ -5,7 +5,10 @@ namespace Evernote;
 use EDAM\Error\EDAMNotFoundException;
 use EDAM\Error\EDAMSystemException;
 use EDAM\Error\EDAMUserException;
+use EDAM\NoteStore\NoteFilter;
+use EDAM\NoteStore\NotesMetadataResultSpec;
 use EDAM\Types\LinkedNotebook;
+use EDAM\Types\NoteSortOrder;
 use Evernote\Exception\ExceptionFactory;
 use Evernote\Exception\PermissionDeniedException;
 use Evernote\Model\Note;
@@ -642,5 +645,403 @@ class Client
         }
 
         return null;
+    }
+
+    /**
+     *  Only used if specifying an explicit notebook instead.
+     */
+    const SEARCH_SCOPE_NONE            = 0;
+    /**
+     *  Search among all personal notebooks.
+     */
+    const SEARCH_SCOPE_PERSONAL        = 1; // 1 << 0
+    /**
+     *  Search among all notebooks shared to the user by others.
+     */
+    const SEARCH_SCOPE_PERSONAL_LINKED = 2; // 1 << 1
+    /**
+     *  Search among all business notebooks the user has joined.
+     */
+    const SEARCH_SCOPE_BUSINESS        = 4; // 1 << 2
+
+    /**
+     *  Use this if your app uses an "App Notebook". (any other set flags will be ignored.)
+     */
+    const SEARCH_SCOPE_APP_NOTEBOOK    = 8; // 1 << 3
+
+    // Default search is among personal notebooks only; typical and most performant scope.
+    const SEARCH_SCOPE_DEFAULT         = 1; // SEARCH_SCOPE_PERSONAL
+
+    // Search everything this user can see. PERFORMANCE NOTE: This can be very expensive and result in many roundtrips if the
+    // user is a member of a business and/or has many linked notebooks.
+    const SEARCH_SCOPE_ALL             = 7; // SEARCH_SCOPE_PERSONAL | SEARCH_SCOPE_PERSONAL_LINKED | SEARCH_SCOPE_BUSINESS
+
+    // The following options address the kind of sort that should be used.
+
+    /**
+     *  Case-insensitive order by title.
+     */
+    const SORT_ORDER_TITLE            = 1; // 1 << 0
+    /**
+     *  Most recently created first.
+     */
+    const SORT_ORDER_RECENTLY_CREATED = 2; // 1 << 1
+    /**
+     *  Most recently updated first.
+     */
+    const SORT_ORDER_RECENTLY_UPDATED = 4; // 1 << 2
+    /**
+     *  Most relevant first. NB only valid when using a single search scope.
+     */
+    const SORT_ORDER_RELEVANCE        = 8; // 1 << 3
+
+    // The following options address the ordering of the sort.
+
+    /**
+     *  Default order (no flag).
+     */
+    const SORT_ORDER_NORMAL  = 0; // 0 << 16
+    /**
+     *  Reverse order.
+     */
+    const SORT_ORDER_REVERSE = 65536; // 1 << 16
+
+    protected function isFlagSet($flags, $flag)
+    {
+        return !!(($flags) & ($flag));
+    }
+
+    protected $findNotesContext;
+
+    public function findNotesWithSearch($noteSearch, Notebook $notebook = null, $scope = 0, $sortKind = 0, $sortOrder = 0, $maxResults = 20)
+    {
+        
+        // App notebook scope is internally just an "all" search, because we don't a priori know where the app
+        // notebook is. There's some room for a fast path in this flow if we have a saved linked record to a
+        // linked app notebook, but that case is likely rare enough to prevent complexifying this code for.
+        if ($this->isFlagSet($scope, self::SEARCH_SCOPE_APP_NOTEBOOK)) {
+            $scope = self::SEARCH_SCOPE_ALL;
+        }
+
+        // Validate the scope and sort arguments.
+        if (null !== $notebook && $scope != self::SEARCH_SCOPE_NONE) {
+            $scope = self::SEARCH_SCOPE_NONE;
+        } elseif (null === $notebook && $scope == self::SEARCH_SCOPE_NONE) {
+            $scope = self::SEARCH_SCOPE_DEFAULT;
+        }
+
+        $requiresLocalMerge = false;
+        if ($scope != self::SEARCH_SCOPE_NONE) {
+            // Check for multiple scopes. Because linked scope can subsume multiple linked notebooks, that *always* triggers
+            // the multiple scopes. If not, then both personal and business must be set together.
+            if (($this->isFlagSet($scope, self::SEARCH_SCOPE_PERSONAL) && $this->isFlagSet($scope, self::SEARCH_SCOPE_BUSINESS)) ||
+                $this->isFlagSet($scope, self::SEARCH_SCOPE_PERSONAL_LINKED)) {
+                // If we're asked for multiple scopes, relevance is not longer supportable (since we
+                // don't know how to combine relevance on the client), so default to updated date,
+                // which is probably the closest proxy to relevance.
+                if ($this->isFlagSet($sortOrder, self::SORT_ORDER_RELEVANCE)) {
+                    $sortOrder = self::SORT_ORDER_RECENTLY_UPDATED;
+                }
+                $requiresLocalMerge = true;
+            }
+        }
+
+        $resultSpec                           = new NotesMetadataResultSpec();
+        $resultSpec->includeNotebookGuid      = true;
+        $resultSpec->includeTitle             = true;
+        $resultSpec->includeCreated           = true;
+        $resultSpec->includeUpdated           = true;
+        $resultSpec->includeUpdateSequenceNum = true;
+
+        $noteFilter = new NoteFilter();
+        $noteFilter->words = $noteSearch->searchString;
+
+        if ($this->isFlagSet($sortOrder, self::SORT_ORDER_TITLE)) {
+            $noteFilter->order = NoteSortOrder::TITLE;
+        } elseif ($this->isFlagSet($sortOrder, self::SORT_ORDER_RECENTLY_CREATED)) {
+            $noteFilter->order = NoteSortOrder::CREATED;
+        } elseif ($this->isFlagSet($sortOrder, self::SORT_ORDER_RECENTLY_UPDATED)) {
+            $noteFilter->order = NoteSortOrder::UPDATED;
+        } elseif ($this->isFlagSet($sortOrder, self::SORT_ORDER_RELEVANCE)) {
+            $noteFilter->order = NoteSortOrder::RELEVANCE;
+        }
+
+        // "Normal" sort is ascending for titles, and descending for dates and relevance.
+        $sortAscending = $this->isFlagSet($sortOrder, self::SORT_ORDER_TITLE);
+
+        if ($this->isFlagSet($sortOrder, self::SORT_ORDER_REVERSE)) {
+            $sortAscending = !$sortAscending;
+        }
+
+        $noteFilter->ascending = $sortAscending;
+
+        if (null !== $notebook) {
+            $noteFilter->notebookGuid = $notebook->guid;
+        }
+
+        // Set up context.
+        $context = new \stdClass();
+        $context->scopeNotebook       = $notebook;
+        $context->scope               = $scope;
+        $context->sortOrder           = $sortOrder;
+        $context->noteFilter          = $noteFilter;
+        $context->resultSpec          = $resultSpec;
+        $context->maxResults          = $maxResults;
+        $context->findMetadataResults = array();
+        $context->requiresLocalMerge  = $requiresLocalMerge;
+        $context->sortAscending       = $sortAscending;
+
+        // If we have a scope notebook, we already know what notebook the results will appear in.
+        // If we don't have a scope notebook, then we need to query for all the notebooks to determine
+        // where to search.
+        if (null === $context->scopeNotebook) {
+            return $this->findNotes_listNotebooksWithContext($context);
+        }
+
+        // Go directly to the next step.
+        return $this->findNotes_findInPersonalScopeWithContext($context);
+    }
+
+    protected function findNotes_listNotebooksWithContext($context)
+    {
+        
+        // XXX: We do the full listNotebooks operation here, which is overkill in all situations,
+        // and could wind us up doing a bunch of extra work. Optimization is to only look at -listNotebooks
+        // if we're personal scope, and -listLinkedNotebooks for linked and business, without ever
+        // authenticating to other note stores.
+        $notebooks = $this->listNotebooks();
+
+        if ($notebooks) {
+            $context->allNotebooks = $notebooks;
+            return $this->findNotes_findInPersonalScopeWithContext($context);
+        } else {
+            // TODO : handle error
+//            ENSDKLogError(@"findNotes: Failed to list notebooks. %@", listNotebooksError);
+//            [self findNotes_completeWithContext:context error:listNotebooksError];
+        }
+    }
+
+    protected function findNotes_findInPersonalScopeWithContext($context)
+    {
+        
+        $skipPersonalScope = false;
+
+        // Skip the personal scope if the scope notebook isn't personal, or if the scope
+        // flag doesn't include personal.
+        if ($context->scopeNotebook) {
+            // If the scope notebook isn't personal, skip personal.
+            if ($context->scopeNotebook->isLinked()) {
+                $skipPersonalScope = true;
+            }
+        } else if (!$this->isFlagSet($context->scope, self::SEARCH_SCOPE_PERSONAL)) {
+            // If the caller didn't request personal scope.
+            $skipPersonalScope = true;
+        }
+        // TODO : handle linked app notebook
+//        else if ([self appNotebookIsLinked]) {
+//        // If we know this is an app notebook scoped app, and we know the app notebook is not personal.
+//        skipPersonalScope = YES;
+//        }
+
+        // If we're skipping personal scope, proceed directly to busines scope.
+        if (true === $skipPersonalScope) {
+            return $this->findNotes_findInBusinessScopeWithContext($context);
+        }
+
+        $notesMetadataList = $this->getUserNotestore()->findNotesMetadata(
+            $this->token,
+            $context->noteFilter,
+            0,
+            $context->maxResults,
+            $context->resultSpec
+        );
+
+        foreach ($notesMetadataList->notes as $notesMetadata) {
+            $context->findMetadataResults[] = $notesMetadata;
+        }
+
+        return $this->findNotes_findInBusinessScopeWithContext($context);
+    }
+
+    protected function findNotes_findInBusinessScopeWithContext($context)
+    {
+        
+        // Skip the business scope if the user is not a business user, or the scope notebook
+        // is not a business notebook, or the business scope is not included.
+        if (false === $this->isBusinessUser() ||
+            ($context->scopeNotebook && !$context->scopeNotebook->isBusinessNotebook()) ||
+            (!$context->scopeNotebook && !$this->isFlagSet($context->scope, self::SEARCH_SCOPE_BUSINESS))
+        ) {
+            return $this->findNotes_findInLinkedScopeWithContext($context);
+        }
+
+        $notesMetadataList = $this->getBusinessNoteStore()->findNotesMetadata(
+            $this->getBusinessToken(),
+            $context->noteFilter,
+            0,
+            $context->maxResults,
+            $context->resultSpec
+        );
+
+        foreach ($notesMetadataList->notes as $notesMetadata) {
+            $context->findMetadataResults[] = $notesMetadata;
+        }
+
+        // Remember which note guids came from the business. We'll use this later to
+        // determine if we're worried about an inability to map back to notebooks.
+        $context->resultGuidsFromBusiness = array();
+        foreach ($notesMetadataList->notes as $noteMetadata) {
+            $context->resultGuidsFromBusiness[] = $noteMetadata->guid;
+        }
+
+        return $this->findNotes_findInLinkedScopeWithContext($context);
+        //TODO:
+        // This is a business user, but apparently has an app notebook restriction that's
+        // not in the business. Go look in linked scope.
+    }
+
+    protected function findNotes_findInLinkedScopeWithContext($context)
+    {
+        
+        // Skip linked scope if scope notebook is not a personal linked notebook, or if the
+        // linked scope is not included.
+        if ($context->scopeNotebook) {
+            if (!$context->scopeNotebook->isLinked() || !$context->scopeNotebook->isBusinessNotebook()) {
+                return $this->findNotes_processResultsWithContext($context);
+            }
+        } elseif (!$this->isFlagSet($context->scope, self::SEARCH_SCOPE_PERSONAL_LINKED)) {
+            return $this->findNotes_processResultsWithContext($context);
+        }
+
+        // Build a list of all the linked notebooks that we need to run the search against.
+        $context->linkedNotebooksToSearch = array();
+        if ($context->scopeNotebook) {
+            $context->linkedNotebooksToSearch[] = $context->scopeNotebook;
+        } else {
+            foreach ($context->allNotebooks as $notebook) {
+                if ($notebook->isLinked() && !$notebook->isBusinessNotebook()) {
+                    $context->linkedNotebooksToSearch[] = $notebook;
+                }
+            }
+        }
+
+        $this->findNotes_nextFindInLinkedScopeWithContext($context);
+    }
+
+    protected function findNotes_nextFindInLinkedScopeWithContext($context)
+    {
+        
+        if (count($context->linkedNotebooksToSearch) == 0) {
+            $this->findNotes_processResultsWithContext($context);
+            return;
+        }
+
+        // Pull the first notebook off the list of pending linked notebooks.
+        $linkedNotebook = array_shift($context->linkedNotebooksToSearch);
+
+
+        $noteStore = $this->getNotestore($linkedNotebook->noteStoreUrl);
+        $authToken = $this->getSharedNotebookAuthResult($linkedNotebook)->authenticationToken;
+
+        $notesMetadataList = $noteStore->findNotesMetadata(
+            $authToken,
+            $context->noteFilter,
+            0,
+            $context->maxResults,
+            $context->resultSpec
+        );
+
+        foreach ($notesMetadataList->notes as $notesMetadata) {
+            $context->findMetadataResults[] = $notesMetadata;
+        }
+
+        $this->findNotes_nextFindInLinkedScopeWithContext($context);
+
+        $this->findNotes_processResultsWithContext($context);
+    }
+
+    protected function compareByTitle($obj1, $obj2)
+    {
+        return strcmp($obj1->title, $obj2->title);
+    }
+
+    protected function compareByCreated($obj1, $obj2)
+    {
+        return strcmp($obj1->created, $obj2->created);
+    }
+
+    protected function compareByUpdated($obj1, $obj2)
+    {
+        return strcmp($obj1->updated, $obj2->updated);
+    }
+
+    protected function findNotes_processResultsWithContext($context)
+    {
+        // OK, now we have a complete list of note refs objects. If we need to do a local sort, then do so.
+        if ($context->requiresLocalMerge) {
+            if ($this->isFlagSet($context->sortOrder, self::SORT_ORDER_RECENTLY_CREATED)) {
+                return usort($context->findMetadataResults, array($this, 'compareByCreated'));
+            } elseif ($this->isFlagSet($context->sortOrder, self::SORT_ORDER_RECENTLY_UPDATED)) {
+                return usort($context->findMetadataResults, array($this, 'compareByUpdated'));
+            } else {
+                return usort($context->findMetadataResults, array($this, 'compareByTitle'));
+            }
+        }
+
+        // Prepare a dictionary of all notebooks by GUID so lookup below is fast.
+        if (!$context->scopeNotebook) {
+            $notebooksByGuid = array();
+            foreach ($context->allNotebooks as $notebook) {
+                $notebooksByGuid[$notebook->guid] = $notebook;
+            }
+        }
+
+        $findNotesResults = array();
+
+        // Turn the metadata list into a list of note refs.
+        foreach ($context->findMetadataResults as $metadata) {
+            $ref       = new \stdClass();
+            $ref->guid = $metadata->guid;
+
+            // Figure out which notebook this note belongs to. (If there's a scope notebook, it always belongs to that one.)
+            $notebook = $context->scopeNotebook ?: $notebooksByGuid[$metadata->notebookGuid];
+
+            if (!$notebook) {
+                // This is probably a business notebook that we haven't explicitly joined, so we don't have it in our list.
+                if (!array_key_exists($metadata->guid, $context->resultGuidsFromBusiness)) {
+                    // Oh, it's not from the business. We really can't find it. This is an error.
+                    //ENSDKLogError(@"Found note metadata but can't determine owning notebook by guid. Metadata = %@", metadata);
+                }
+                continue;
+            }
+
+            if ($notebook->isBusinessNotebook()) {
+                $ref->type = 'Business';
+                $ref->linkedNotebook = $notebook->linkedNotebook;
+            } elseif ($notebook->isLinkedNotebook()) {
+                $ref->type = 'Shared';
+                $ref->linkedNotebook = $notebook->linkedNotebook;
+            } else {
+                $ref->type = 'Personal';
+            }
+
+            $result                    = new \stdClass();
+            $result->noteRef           = $ref;
+            $result->notebook          = $notebook;
+            $result->title             = $metadata->title;
+            $result->created           = $metadata->created;
+            $result->updated           = $metadata->updated;
+            $result->updateSequenceNum = $metadata->updateSequenceNum;
+
+            $findNotesResults[] = $result;
+
+            // If the caller specified a max result count, and we've reached it, then stop fixing up
+            // results here.
+            if ($context->maxResults > 0 && count($findNotesResults) >= $context->maxResults) {
+                break;
+            }
+        }
+
+        return $findNotesResults;
     }
 }
