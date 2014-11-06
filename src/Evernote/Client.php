@@ -13,6 +13,7 @@ use Evernote\Exception\ExceptionFactory;
 use Evernote\Exception\PermissionDeniedException;
 use Evernote\Model\Note;
 use Evernote\Model\Notebook;
+use Evernote\Model\Search;
 
 class Client
 {
@@ -715,7 +716,10 @@ class Client
 
     public function findNotesWithSearch($noteSearch, Notebook $notebook = null, $scope = 0, $sortKind = 0, $sortOrder = 0, $maxResults = 20)
     {
-        
+        if (!$noteSearch instanceof Search) {
+            $noteSearch = new Search($noteSearch);
+        }
+
         // App notebook scope is internally just an "all" search, because we don't a priori know where the app
         // notebook is. There's some room for a fast path in this flow if we have a saved linked record to a
         // linked app notebook, but that case is likely rare enough to prevent complexifying this code for.
@@ -754,7 +758,7 @@ class Client
         $resultSpec->includeUpdateSequenceNum = true;
 
         $noteFilter = new NoteFilter();
-        $noteFilter->words = $noteSearch->searchString;
+        $noteFilter->words = $noteSearch->getSearchString();
 
         if ($this->isFlagSet($sortOrder, self::SORT_ORDER_TITLE)) {
             $noteFilter->order = NoteSortOrder::TITLE;
