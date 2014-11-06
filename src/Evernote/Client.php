@@ -7,6 +7,7 @@ use EDAM\Error\EDAMSystemException;
 use EDAM\Error\EDAMUserException;
 use EDAM\Types\LinkedNotebook;
 use Evernote\Exception\ExceptionFactory;
+use Evernote\Exception\PermissionDeniedException;
 use Evernote\Model\Note;
 use Evernote\Model\Notebook;
 
@@ -377,17 +378,23 @@ class Client
             $notebook = new Notebook();
         }
 
-        if (true === $note->getSaved()) {
+        if (true === $note->getSaved() && $note->notebookGuid === $notebook->guid) {
             return $this->replaceNote($note, $note);
         }
 
-        $edamNote = new \EDAM\Types\Note();
+        if ($note->getEdamNote()) {
+            $edamNote = $note->getEdamNote();
+        } else {
+            $edamNote = new \EDAM\Types\Note();
+        }
+
 
         $edamNote->title      = $note->title;
         $edamNote->content    = $note->content;
         $edamNote->attributes = $note->attributes;
         $edamNote->resources  = $note->resources;
         $edamNote->tagNames   = $note->tagNames;
+
 
         if (null !== $notebook && null !== $notebook->guid) {
             $edamNote->notebookGuid = $notebook->guid;
@@ -491,6 +498,43 @@ class Client
         }
     }
 
+    public function moveNote(Note $note, Notebook $notebook)
+    {
+        if ($this->isAppNotebookToken($this->token)) {
+            throw new PermissionDeniedException("You can't move a note as you're using an app notebook token");
+        }
+
+        $edamNote               = $note->getEdamNote();
+        $noteStore              = $note->getNoteStore();
+        $token                  = $note->getAuthToken();
+        $edamNote->notebookGuid = $notebook->guid;
+
+        try {
+            $moved_note    = $noteStore->updateNote($token, $edamNote);
+
+            $note = $this->getNoteInstance($moved_note, $noteStore, $token);
+        } catch (EDAMNotFoundException $e) {
+            $moved_note = $this->uploadNote($note, $notebook);
+            if ($moved_note && $moved_note->notebookGuid === $notebook->guid) {
+                $this->deleteNote($note);
+            }
+
+            $note = $moved_note;
+        } catch (EDAMUserException $e) {
+            if ($e->parameter === 'Note.notebookGuid') {
+                $moved_note = $this->uploadNote($note, $notebook);
+                if ($moved_note && $moved_note->notebookGuid === $notebook->guid) {
+                    $this->deleteNote($note);
+                }
+                $note = $moved_note;
+            } else {
+                throw $e;
+            }
+        }
+
+        return $note;
+    }
+
     public function getNote($guid, $scope = null)
     {
         if (null === $scope || self::PERSONAL_SCOPE === $scope) {
@@ -558,7 +602,6 @@ class Client
 
         if (null === $scope || self::LINKED_SCOPE === $scope) {
             $linkedNotebooks = $this->listLinkedNotebooks();
-
             foreach ($linkedNotebooks as $linkedNotebook) {
                 try {
                     $sharedNotebook = $this->getNoteBookByLinkedNotebook($linkedNotebook);
