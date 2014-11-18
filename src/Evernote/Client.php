@@ -14,6 +14,7 @@ use Evernote\Exception\PermissionDeniedException;
 use Evernote\Model\Note;
 use Evernote\Model\Notebook;
 use Evernote\Model\Search;
+use Evernote\Model\SearchResult;
 
 class Client
 {
@@ -714,7 +715,7 @@ class Client
 
     protected $findNotesContext;
 
-    public function findNotesWithSearch($noteSearch, Notebook $notebook = null, $scope = 0, $sortKind = 0, $sortOrder = 0, $maxResults = 20)
+    public function findNotesWithSearch($noteSearch, Notebook $notebook = null, $scope = 0, $sortOrder = 0, $maxResults = 20)
     {
         if (!$noteSearch instanceof Search) {
             $noteSearch = new Search($noteSearch);
@@ -1004,8 +1005,8 @@ class Client
 
         // Turn the metadata list into a list of note refs.
         foreach ($context->findMetadataResults as $metadata) {
-            $ref       = new \stdClass();
-            $ref->guid = $metadata->guid;
+            $result       = new SearchResult();
+            $result->guid = $metadata->guid;
 
             // Figure out which notebook this note belongs to. (If there's a scope notebook, it always belongs to that one.)
             $notebook = $context->scopeNotebook ?: $notebooksByGuid[$metadata->notebookGuid];
@@ -1013,6 +1014,7 @@ class Client
             if (!$notebook) {
                 // This is probably a business notebook that we haven't explicitly joined, so we don't have it in our list.
                 if (!array_key_exists($metadata->guid, $context->resultGuidsFromBusiness)) {
+                    //TODO
                     // Oh, it's not from the business. We really can't find it. This is an error.
                     //ENSDKLogError(@"Found note metadata but can't determine owning notebook by guid. Metadata = %@", metadata);
                 }
@@ -1020,17 +1022,13 @@ class Client
             }
 
             if ($notebook->isBusinessNotebook()) {
-                $ref->type = 'Business';
-                $ref->linkedNotebook = $notebook->linkedNotebook;
+                $result->type = 'Business';
             } elseif ($notebook->isLinkedNotebook()) {
-                $ref->type = 'Shared';
-                $ref->linkedNotebook = $notebook->linkedNotebook;
+                $result->type = 'Shared';
             } else {
-                $ref->type = 'Personal';
+                $result->type = 'Personal';
             }
 
-            $result                    = new \stdClass();
-            $result->noteRef           = $ref;
             $result->notebook          = $notebook;
             $result->title             = $metadata->title;
             $result->created           = $metadata->created;
