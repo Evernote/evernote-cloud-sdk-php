@@ -708,6 +708,12 @@ class Client
      */
     const SORT_ORDER_REVERSE = 65536; // 1 << 16
 
+    const BUSINESS_NOTE = 0;
+
+    const PERSONAL_NOTE = 1;
+
+    const SHARED_NOTE   = 2;
+
     protected function isFlagSet($flags, $flag)
     {
         return !!(($flags) & ($flag));
@@ -821,14 +827,11 @@ class Client
             return $this->findNotes_findInPersonalScopeWithContext($context);
         } else {
             // TODO : handle error
-//            ENSDKLogError(@"findNotes: Failed to list notebooks. %@", listNotebooksError);
-//            [self findNotes_completeWithContext:context error:listNotebooksError];
         }
     }
 
     protected function findNotes_findInPersonalScopeWithContext($context)
     {
-        
         $skipPersonalScope = false;
 
         // Skip the personal scope if the scope notebook isn't personal, or if the scope
@@ -845,7 +848,7 @@ class Client
         // TODO : handle linked app notebook
 //        else if ([self appNotebookIsLinked]) {
 //        // If we know this is an app notebook scoped app, and we know the app notebook is not personal.
-//        skipPersonalScope = YES;
+//        $skipPersonalScope = true;
 //        }
 
         // If we're skipping personal scope, proceed directly to busines scope.
@@ -994,8 +997,8 @@ class Client
         }
 
         // Prepare a dictionary of all notebooks by GUID so lookup below is fast.
+        $notebooksByGuid = array();
         if (!$context->scopeNotebook) {
-            $notebooksByGuid = array();
             foreach ($context->allNotebooks as $notebook) {
                 $notebooksByGuid[$notebook->guid] = $notebook;
             }
@@ -1022,14 +1025,14 @@ class Client
             }
 
             if ($notebook->isBusinessNotebook()) {
-                $result->type = 'Business';
+                $result->type = self::BUSINESS_NOTE;
             } elseif ($notebook->isLinkedNotebook()) {
-                $result->type = 'Shared';
+                $result->type = self::SHARED_NOTE;
             } else {
-                $result->type = 'Personal';
+                $result->type = self::PERSONAL_NOTE;
             }
 
-            $result->notebook          = $notebook;
+            //$result->notebook          = $notebook;
             $result->title             = $metadata->title;
             $result->created           = $metadata->created;
             $result->updated           = $metadata->updated;

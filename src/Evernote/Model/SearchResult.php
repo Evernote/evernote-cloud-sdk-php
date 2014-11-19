@@ -8,8 +8,6 @@ class SearchResult
 
     public $type;
 
-    public $notebook;
-
     public $title;
 
     public $created;
