@@ -24,7 +24,37 @@ $sandbox = true;
 
 $client = new \Evernote\Client($token, $sandbox);
 
-$search = new \stdClass();
-$search->searchString = 'test';
+/**
+ * The search string
+ */
+$search = new \Evernote\Model\Search('test');
 
-$notes = $client->findNotesWithSearch($search);
+/**
+ * The notebook to search in
+ */
+$notebook = null;
+
+/**
+ * The scope of the search
+ */
+$scope = \Evernote\Client::SEARCH_SCOPE_BUSINESS;
+
+/**
+ * The order of the sort
+ */
+$order = \Evernote\Client::SORT_ORDER_REVERSE | \Evernote\Client::SORT_ORDER_RECENTLY_CREATED;
+
+/**
+ * The number of results
+ */
+$maxResult = 5;
+
+$results = $client->findNotesWithSearch($search, $notebook, $scope, $order, $maxResult);
+
+foreach ($results as $result) {
+    $noteGuid    = $result->guid;
+    $noteType    = $result->type;
+    $noteTitle   = $result->title;
+    $noteCreated = $result->created;
+    $noteUpdated = $result->updated;
+}
