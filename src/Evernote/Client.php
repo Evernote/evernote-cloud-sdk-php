@@ -118,8 +118,7 @@ class Client
     public function getBusinessNoteStore()
     {
         if (null === $this->businessNoteStore && $this->isBusinessUser()) {
-            $this->businessNoteStore =
-                $this->getNoteStore($this->getBusinessAuth()->noteStoreUrl);
+            $this->businessNoteStore = $this->getAdvancedClient()->getBusinessNoteStore();
         }
 
         return $this->businessNoteStore;
@@ -143,8 +142,10 @@ class Client
         try {
             $personalNotebooks = $this->listPersonalNotebooks();
         } catch (EDAMUserException $e) {
+            echo "\n" . $e->parameter;
             $personalNotebooks = array();
         } catch (EDAMSystemException $e) {
+            echo "\n" . $e->parameter;
             $personalNotebooks = array();
         }
 
@@ -289,12 +290,7 @@ class Client
     public function getUserNotestore()
     {
         if (null === $this->userNoteStore) {
-            $noteStoreUrl =
-                $this->getAdvancedClient()
-                    ->getUserStore()
-                    ->getNoteStoreUrl($this->token);
-
-            $this->userNoteStore = $this->getNoteStore($noteStoreUrl);
+            $this->userNoteStore = $this->getAdvancedClient()->getNoteStore();
         }
 
         return $this->userNoteStore;
@@ -319,7 +315,7 @@ class Client
     public function getAdvancedClient()
     {
         if (null === $this->advancedClient) {
-            $this->advancedClient = new AdvancedClient($this->sandbox);
+            $this->advancedClient = new AdvancedClient($this->getToken(), $this->sandbox);
         }
 
         return $this->advancedClient;

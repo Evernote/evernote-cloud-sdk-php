@@ -3,11 +3,14 @@
 namespace Evernote;
 
 use Evernote\Factory\ThriftClientFactory;
-use Evernote\Store;
+use Evernote\Store\Store;
 
 class AdvancedClient
 {
-    /** @var bool  */
+    /** @var  string */
+    protected $token;
+
+    /** @var bool */
     protected $sandbox;
 
     /** @var \Evernote\Factory\ThriftClientFactory  */
@@ -23,10 +26,10 @@ class AdvancedClient
      * @param bool $sandbox
      * @param null $thriftClientFactory
      */
-    public function __construct($sandbox = true, $thriftClientFactory = null)
+    public function __construct($token, $sandbox = true, $thriftClientFactory = null)
     {
+        $this->token               = $token;
         $this->sandbox             = $sandbox;
-
         $this->thriftClientFactory = $thriftClientFactory;
     }
 
@@ -37,7 +40,10 @@ class AdvancedClient
     {
         if (null === $this->userStore) {
             $this->userStore =
-                $this->getThriftClient('user', $this->getEndpoint('/edam/user'));
+                new Store(
+                    $this->token,
+                    $this->getThriftClient('user', $this->getEndpoint('/edam/user'))
+                );
         }
 
         return $this->userStore;
@@ -50,10 +56,36 @@ class AdvancedClient
     public function getNoteStore($noteStoreUrl = null)
     {
         if (null === $noteStoreUrl) {
-            return $this->getUserNoteStore();
+            $noteStoreUrl = $this->getUserStore()->getNoteStoreUrl($this->token);
         }
 
-        return $this->getThriftClient('note', $noteStoreUrl);
+        return new Store(
+            $this->token,
+            $this->getThriftClient('note', $noteStoreUrl)
+        );
+    }
+
+
+    public function getSharedNoteStore($linkedNotebook)
+    {
+        $noteStoreUrl = $linkedNotebook->noteStoreUrl;
+        $noteStore = $this->getNoteStore($noteStoreUrl);
+        $sharedAuth = $noteStore->authenticateToSharedNotebook($linkedNotebook->shareKey);
+        $sharedToken = $sharedAuth->authenticationToken;
+
+        return new Store(
+            $sharedToken,
+            $this->getThriftClient('note', $noteStoreUrl)
+        );
+    }
+
+    public function getBusinessNoteStore()
+    {
+        $businessAuth = $this->getUserStore()->authenticateToBusiness($this->token);
+
+        return $this->getNoteStore($businessAuth->noteStoreUrl);
+
+
     }
 
     /**
@@ -92,5 +124,5 @@ class AdvancedClient
     {
         return $this->getThriftClientFactory()->createThriftClient($type, $url);
     }
-
 }
+
