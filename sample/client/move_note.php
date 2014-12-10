@@ -7,7 +7,7 @@ require __DIR__ . '/../../vendor/autoload.php';
  * or by creating a 
  * [2] Developer Token: https://dev.evernote.com/doc/articles/authentication.php#devtoken
  */
-$token = '%TOKEN%';
+$token = '%YOUR_TOKEN%';
 
 /** Understanding SANDBOX vs PRODUCTION Environments
  *
@@ -28,7 +28,11 @@ $note         = new \Evernote\Model\Note();
 $note->title  = 'Move a note';
 $note->content = new \Evernote\Model\PlainTextNoteContent('Some plain text content.');
 
+$notebook = null;
+
 $uploaded_note = $client->uploadNote($note, $notebook);
+
+echo "\nFirst guid : " . $uploaded_note->guid;
 
 /**
  * The second parameter $notebook is - of course - mandatory.
@@ -57,9 +61,9 @@ $notebook->guid = '%notebook_guid%';
  * is to create a copy of the note is the destination notebook and delete the original note.
  * This will put the note in the trash.
  */
-$moved_note = $client->moveNote($note, $notebook);
+$moved_note = $client->moveNote($uploaded_note, $notebook);
 
 /**
  * Get the guid of the moved note as it could have changed if the destination notebook is not in the same notestore
  */
-$new_guid = $moved_note->guid;
+echo "\nNew guid : " . $new_guid = $moved_note->guid;
