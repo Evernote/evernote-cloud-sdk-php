@@ -379,7 +379,9 @@ class Client
             $notebook = new Notebook();
         }
 
-        if (true === $note->getSaved() && $note->notebookGuid === $notebook->guid) {
+        if (null != $notebook
+            && true === $note->getSaved()
+            && $note->notebookGuid === $notebook->guid) {
             return $this->replaceNote($note, $note);
         }
 
