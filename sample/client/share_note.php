@@ -24,10 +24,10 @@ $sandbox = true;
 
 $client = new \Evernote\Client($token, $sandbox);
 
-$note         = new \Evernote\Model\Note();
-$note->title  = 'Test note';
+$note          = new \Evernote\Model\Note();
+$note->title   = 'Share a note';
 $note->content = new \Evernote\Model\PlainTextNoteContent('Some plain text content.');
 
 $uploaded_note = $client->uploadNote($note);
 
-$client->shareNote($uploaded_note);
+echo "\nPublic link : " . $client->shareNote($uploaded_note);
