@@ -28,7 +28,7 @@ $note         = new \Evernote\Model\Note();
 $note->title  = 'Test note';
 $note->content = new \Evernote\Model\PlainTextNoteContent('Some plain text content.');
 
-$client->uploadNote($note);
+$uploaded_note = $client->uploadNote($note);
 
 $datetime = new \DateTime('tomorrow');
 
