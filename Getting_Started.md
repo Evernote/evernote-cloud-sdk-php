@@ -58,14 +58,16 @@ $callback = 'http://host/pathto/evernote-cloud-sdk-php/sample/oauth/index.php';
 $oauth_data  = $oauth_handler->authorize($key, $secret, $callback);
 
 echo "\nOauth Token : " . $oauth_data['oauth_token'];
+```
 
+You can then instantiate the client and call the api with this token.
 
-Getting the client
-------------------
+Getting the "simple" client
+---------------------------
 
 All API calls are made with the \Evernote\Client.
 Instantiate a new client object with a token and you're done.
-The token can be a oauth token or a dev token.
+The token can be an oauth token or a dev token.
 
 ``` php
 <?php
@@ -74,7 +76,35 @@ require_once 'vendor/autoload.php';
 
 $token = '%oauth_token%';
 
-$client = new \Evernote\Client($token);
+$sandbox = true;
+
+$client = new \Evernote\Client($token, $sandbox);
+```
+
+Getting the "advanced" client
+-----------------------------
+
+The advanced client gives you a low level access to the API.
+See the [API Reference](https://dev.evernote.com/doc/reference/) for more information.
+
+``` php
+<?php
+
+require_once 'vendor/autoload.php';
+
+$token = '%oauth_token%';
+
+$sandbox = true;
+
+$advancedClient = new \Evernote\AdvancedClient($token, $sandbox);
+```
+
+Then for example :
+
+``` php
+$userStore = $advancedClient->getUserStore();
+
+$user = $userStore->getUser();
 ```
 
 Going further
