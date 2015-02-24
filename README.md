@@ -30,6 +30,9 @@ If you don't use  **Composer** , just require the provided autoloader:
 
 require_once 'src/autoload.php';
 ```
+Getting started with the SDK
+-------------------------------------
+[Getting started guide](Getting_Started.md)
 
 Note for users of the 1.x SDK for PHP
 -------------------------------------

@@ -3,21 +3,11 @@ Installation
 
 The recommended way to install the SDK is through composer.
 
-Just create a `composer.json` file for your project:
-
-``` json
-{
-    "require": {
-        "evernote/evernote-cloud-sdk-php": "@dev-master"
-    }
-}
-```
-
-And run these two commands to install it:
+Just run these two commands to install it:
 
 ``` bash
 $ curl -sS https://getcomposer.org/installer | php
-$ composer install
+$ php composer.phar require evernote/evernote-cloud-sdk-php dev-master
 ```
 
 Now you can add the autoloader, and you will have access to the library:
@@ -65,6 +55,9 @@ You can then instantiate the client and call the api with this token.
 Getting the "simple" client
 ---------------------------
 
+The "simple" client is a high-level wrapper on top of the "advanced" client (see below).
+It provides helper methods that hide complex stuff such as dealing with business accounts, app notebooks, etc.
+
 All API calls are made with the \Evernote\Client.
 Instantiate a new client object with a token and you're done.
 The token can be an oauth token or a dev token.
@@ -99,7 +92,7 @@ $sandbox = true;
 $advancedClient = new \Evernote\AdvancedClient($token, $sandbox);
 ```
 
-Then for example :
+Then you can, for example, call the getUser() method:
 
 ``` php
 $userStore = $advancedClient->getUserStore();
