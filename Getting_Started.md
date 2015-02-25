@@ -125,6 +125,24 @@ $user = $userStore->getUser();
 ```
 You may notice that we don't pass the token to the getUser() method.  It's the same with all the methods that require a token. Just omit it as it is already set on the client object.
 
+Using the "simple" client
+-------------
+[Create a note](sample/client/create_note.php)
+
+[Delete a note](sample/client/delete_note.php)
+
+[Move a note](sample/client/move_note.php)
+
+[Share a note](sample/client/share_note.php)
+
+[Replace a note](sample/client/replace_note.php)
+
+[Add resources to a note](sample/client/add_resource.php)
+
+[Find notes](sample/client/find_notes.php)
+
+[Manage reminders](sample/client/reminders.php)
+
 Going further
 -------------
 
