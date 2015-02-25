@@ -77,10 +77,14 @@ $client = new \Evernote\Client($token, $sandbox);
 Getting the "advanced" client
 -----------------------------
 
-The advanced client gives you a low level access to the API.
-See the [API Reference](https://dev.evernote.com/doc/reference/) for more information.
+The advanced client gives you a low level access to the API. That means you can call the thrift methods directly.  See the [API Reference](https://dev.evernote.com/doc/reference/) for the list of methods available.
+You can use this client for optimization reasons or to achieve more complex tasks than the ones handled by the simple client.
 
-``` php
+There are two ways to get the advanced client.
+
+From scratch :
+
+```php
 <?php
 
 require_once 'vendor/autoload.php';
@@ -92,13 +96,34 @@ $sandbox = true;
 $advancedClient = new \Evernote\AdvancedClient($token, $sandbox);
 ```
 
-Then you can, for example, call the getUser() method:
+or, if you already have an instance of the simple client :
+
+```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+$token = '%oauth_token%';
+
+$sandbox = true;
+
+$client = new \Evernote\Client($token, $sandbox);
+
+$client->getNote('the-note-guid');
+
+$advancedClient = $client->getAdvancedClient();
+```
+
+Once you have a instance of the advanced client you can, for example, call the getUser() method:
 
 ``` php
+// First, get the right Store
 $userStore = $advancedClient->getUserStore();
 
+// Then do the call
 $user = $userStore->getUser();
 ```
+You may notice that we don't pass the token to the getUser() method.  It's the same with all the methods that require a token. Just omit it as it is already set on the client object.
 
 Going further
 -------------
