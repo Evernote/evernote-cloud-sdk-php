@@ -836,7 +836,7 @@ class Client
         // flag doesn't include personal.
         if ($context->scopeNotebook) {
             // If the scope notebook isn't personal, skip personal.
-            if ($context->scopeNotebook->isLinked()) {
+            if ($context->scopeNotebook->isLinkedNotebook()) {
                 $skipPersonalScope = true;
             }
         } else if (!$this->isFlagSet($context->scope, self::SEARCH_SCOPE_PERSONAL)) {
@@ -912,7 +912,7 @@ class Client
         // Skip linked scope if scope notebook is not a personal linked notebook, or if the
         // linked scope is not included.
         if ($context->scopeNotebook) {
-            if (!$context->scopeNotebook->isLinked() || !$context->scopeNotebook->isBusinessNotebook()) {
+            if (!$context->scopeNotebook->isLinkedNotebook() || !$context->scopeNotebook->isBusinessNotebook()) {
                 return $this->findNotes_processResultsWithContext($context);
             }
         } elseif (!$this->isFlagSet($context->scope, self::SEARCH_SCOPE_PERSONAL_LINKED)) {
