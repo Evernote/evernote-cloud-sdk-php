@@ -42,14 +42,101 @@ class Client
     /** @var  \EDAM\UserStore\AuthenticationResult */
     protected $businessAuth;
 
+    /**
+     * Personal scope for the getNote and getNotebook methods
+     */
     const PERSONAL_SCOPE = 1;
-
+    /**
+     * Linked scope for the getNote and getNotebook methods
+     */
     const LINKED_SCOPE   = 2;
 
     /**
-     * @param null $token
+     *  Only used if specifying an explicit notebook instead.
+     */
+    const SEARCH_SCOPE_NONE            = 0;
+    /**
+     *  Search among all personal notebooks.
+     */
+    const SEARCH_SCOPE_PERSONAL        = 1; // 1 << 0
+    /**
+     *  Search among all notebooks shared to the user by others.
+     */
+    const SEARCH_SCOPE_PERSONAL_LINKED = 2; // 1 << 1
+    /**
+     *  Search among all business notebooks the user has joined.
+     */
+    const SEARCH_SCOPE_BUSINESS        = 4; // 1 << 2
+
+    /**
+     *  Use this if your app uses an "App Notebook". (any other set flags will be ignored.)
+     */
+    const SEARCH_SCOPE_APP_NOTEBOOK    = 8; // 1 << 3
+
+    /**
+     * Default search is among personal notebooks only; typical and most performant scope.
+     */
+    const SEARCH_SCOPE_DEFAULT         = 1; // SEARCH_SCOPE_PERSONAL
+
+    /**
+     * Search everything this user can see. PERFORMANCE NOTE: This can be very expensive and result in many roundtrips if the
+     * user is a member of a business and/or has many linked notebooks.
+     */
+    const SEARCH_SCOPE_ALL             = 7; // SEARCH_SCOPE_PERSONAL | SEARCH_SCOPE_PERSONAL_LINKED | SEARCH_SCOPE_BUSINESS
+
+    // The following options address the kind of sort that should be used.
+
+    /**
+     *  Case-insensitive order by title.
+     */
+    const SORT_ORDER_TITLE            = 1; // 1 << 0
+    /**
+     *  Most recently created first.
+     */
+    const SORT_ORDER_RECENTLY_CREATED = 2; // 1 << 1
+    /**
+     *  Most recently updated first.
+     */
+    const SORT_ORDER_RECENTLY_UPDATED = 4; // 1 << 2
+    /**
+     *  Most relevant first. NB only valid when using a single search scope.
+     */
+    const SORT_ORDER_RELEVANCE        = 8; // 1 << 3
+
+    // The following options address the ordering of the sort.
+
+    /**
+     *  Default order (no flag).
+     */
+    const SORT_ORDER_NORMAL  = 0; // 0 << 16
+    /**
+     *  Reverse order.
+     */
+    const SORT_ORDER_REVERSE = 65536; // 1 << 16
+
+    /**
+     * Is it a business note ?
+     */
+    const BUSINESS_NOTE = 0;
+
+    /**
+     * Is it a personal note ?
+     */
+    const PERSONAL_NOTE = 1;
+
+    /**
+     * Is it a shared note ?
+     */
+    const SHARED_NOTE   = 2;
+
+    /**************************/
+    /**** Public interface ****/
+    /**************************/
+
+    /**
+     * @param string|null $token
      * @param bool $sandbox
-     * @param null $advancedClient
+     * @param \Evernote\AdvancedClient|null $advancedClient
      */
     public function __construct($token = null, $sandbox = true, $advancedClient = null)
     {
@@ -59,6 +146,8 @@ class Client
     }
 
     /**
+     * Returns the User corresponding to the provided authentication token
+     *
      * @return \EDAM\Types\User
      * @throws \Exception
      */
@@ -77,6 +166,8 @@ class Client
     }
 
     /**
+     * Returns a boolean indicating if the user has a business account
+     *
      * @return bool
      */
     public function isBusinessUser()
@@ -85,25 +176,8 @@ class Client
     }
 
     /**
-     * @return \EDAM\UserStore\AuthenticationResult
-     * @throws \Exception
-     */
-    protected function getBusinessAuth()
-    {
-        if (null === $this->businessAuth) {
-            try {
-                $this->businessAuth =
-                    $this->getAdvancedClient()
-                        ->getUserStore()->authenticateToBusiness($this->token);
-            } catch (\Exception $e) {
-                throw ExceptionFactory::create($e);
-            }
-        }
-
-        return $this->businessAuth;
-    }
-
-    /**
+     * Returns the token used to access the business notestore
+     *
      * @return string
      */
     public function getBusinessToken()
@@ -114,7 +188,12 @@ class Client
 
         return $this->businessToken;
     }
-    
+
+    /**
+     * Returns the business notestore
+     *
+     * @return \EDAM\NoteStore\NoteStoreClient|mixed
+     */
     public function getBusinessNoteStore()
     {
         if (null === $this->businessNoteStore && $this->isBusinessUser()) {
@@ -124,16 +203,31 @@ class Client
         return $this->businessNoteStore;
     }
 
+    /**
+     * Returns the list of notebooks shared by the user with her business account
+     *
+     * @return null
+     */
     public function getBusinessSharedNotebooks()
     {
         return $this->getBusinessNoteStore()->listSharedNotebooks($this->getBusinessToken());
     }
 
+    /**
+     * Returns the list of notebooks shared to the user through the business account
+     *
+     * @return array
+     */
     public function getBusinessLinkedNotebooks()
     {
         return $this->getBusinessNoteStore()->listNotebooks($this->getBusinessToken());
     }
 
+    /**
+     * Returns the list of notebooks
+     *
+     * @return array
+     */
     public function listNotebooks()
     {
         /**
@@ -142,10 +236,8 @@ class Client
         try {
             $personalNotebooks = $this->listPersonalNotebooks();
         } catch (EDAMUserException $e) {
-            echo "\n" . $e->parameter;
             $personalNotebooks = array();
         } catch (EDAMSystemException $e) {
-            echo "\n" . $e->parameter;
             $personalNotebooks = array();
         }
 
@@ -249,26 +341,11 @@ class Client
         return $resultNotebooks;
     }
 
-    protected function getSharedNotebookAuthResult(LinkedNotebook $linkedNotebook)
-    {
-        $sharedNoteStore = $this->getNotestore($linkedNotebook->noteStoreUrl);
-        return $sharedNoteStore->authenticateToSharedNotebook($linkedNotebook->shareKey, $this->token);
-    }
-
-    protected function getNoteBookByLinkedNotebook(LinkedNotebook $linkedNotebook)
-    {
-        $sharedNoteStore = $this->getNotestore($linkedNotebook->noteStoreUrl);
-        $authToken = $this->getSharedNotebookAuthResult($linkedNotebook)->authenticationToken;
-        $sharedNotebook = $sharedNoteStore->getSharedNotebookByAuth($authToken);
-
-        $notebook = new Notebook(null, $linkedNotebook, $sharedNotebook);
-
-        $notebook->authToken = $authToken;
-
-        return $notebook;
-    }
-    
-    
+    /**
+     * Returns the list of personal notebooks
+     *
+     * @return array
+     */
     public function listPersonalNotebooks()
     {
         $notebooks = $this->getUserNotestore()->listNotebooks($this->token);
@@ -276,17 +353,32 @@ class Client
         return $notebooks;
     }
 
+    /**
+     * Returns the list of notebooks shared by the user
+     *
+     * @return array
+     */
     public function listSharedNotebooks()
     {
         return $this->getUserNotestore()->listSharedNotebooks($this->token);
     }
 
+    /**
+     * Returns the list of notebooks shared to the user
+     *
+     * @return array
+     */
     public function listLinkedNotebooks()
     {
-
         return $this->getUserNotestore()->listLinkedNotebooks($this->token);
     }
 
+    /**
+     *
+     * Returns the personal notestore of the user
+     *
+     * @return \EDAM\NoteStore\NoteStoreClient|mixed
+     */
     public function getUserNotestore()
     {
         if (null === $this->userNoteStore) {
@@ -296,63 +388,13 @@ class Client
         return $this->userNoteStore;
     }
 
-    protected function getNoteStore($noteStoreUrl)
-    {
-        return $this->getAdvancedClient()->getNoteStore($noteStoreUrl);
-    }
-
     /**
-     * @param \Evernote\AdvancedClient $advancedClient
+     * Replaces an existing note by another one (new or existing)
+     *
+     * @param Note $noteToReplace
+     * @param Note $note
+     * @return Note
      */
-    public function setAdvancedClient($advancedClient)
-    {
-        $this->advancedClient = $advancedClient;
-    }
-
-    /**
-     * @return \Evernote\AdvancedClient
-     */
-    public function getAdvancedClient()
-    {
-        if (null === $this->advancedClient) {
-            $this->advancedClient = new AdvancedClient($this->getToken(), $this->sandbox);
-        }
-
-        return $this->advancedClient;
-    }
-
-    /**
-     * @param boolean $sandbox
-     */
-    public function setSandbox($sandbox)
-    {
-        $this->sandbox = $sandbox;
-    }
-
-    /**
-     * @return boolean
-     */
-    public function getSandbox()
-    {
-        return $this->sandbox;
-    }
-
-    /**
-     * @param string $token
-     */
-    public function setToken($token)
-    {
-        $this->token = $token;
-    }
-
-    /**
-     * @return string
-     */
-    public function getToken()
-    {
-        return $this->token;
-    }
-
     public function replaceNote(Note $noteToReplace, Note $note)
     {
         $edamNote = $noteToReplace->getEdamNote();
@@ -373,6 +415,15 @@ class Client
         return $en_note;
     }
 
+    /**
+     * Sends a new Note to the API
+     *
+     * @param Note $note
+     * @param Notebook $notebook
+     * @return Note
+     * @throws \EDAM\Error\EDAMNotFoundException
+     * @throws \Exception
+     */
     public function uploadNote(Note $note, Notebook $notebook = null)
     {
         if ($this->isAppNotebookToken($this->token)) {
@@ -432,6 +483,12 @@ class Client
         return $note;
     }
 
+    /**
+     * Deletes a note
+     *
+     * @param Note $note
+     * @return bool
+     */
     public function deleteNote(Note $note)
     {
         if (null === $note->guid) {
@@ -467,6 +524,12 @@ class Client
 
     }
 
+    /**
+     * Shares a note and returns the share url
+     *
+     * @param Note $note
+     * @return null|string
+     */
     public function shareNote(Note $note)
     {
         if (null === $note->guid) {
@@ -501,6 +564,16 @@ class Client
         }
     }
 
+    /**
+     * Moves a note to another notebook
+     *
+     * @param Note $note
+     * @param Notebook $notebook
+     * @return Note
+     * @throws Exception\PermissionDeniedException
+     * @throws \EDAM\Error\EDAMUserException
+     * @throws \Exception
+     */
     public function moveNote(Note $note, Notebook $notebook)
     {
         if ($this->isAppNotebookToken($this->token)) {
@@ -538,6 +611,13 @@ class Client
         return $note;
     }
 
+    /**
+     * Retrieves an existing note
+     *
+     * @param $guid
+     * @param null $scope
+     * @return Note|null
+     */
     public function getNote($guid, $scope = null)
     {
         if (null === $scope || self::PERSONAL_SCOPE === $scope) {
@@ -571,24 +651,30 @@ class Client
                     // Note not found
                     continue;
                 }
-
             }
 
             return null;
         }
-
     }
 
-    protected function getShareUrl($guid, $shardId, $shareKey, $serviceHost)
-    {
-        return $serviceHost . "/shard/" . $shardId . "/sh/" . $guid . "/" . $shareKey;
-    }
-
+    /**
+     * Checks if the token is an "app notebook" one
+     *
+     * @param $token
+     * @return bool
+     */
     public function isAppNotebookToken($token)
     {
         return strpos($token, ':B=') !== false;
     }
 
+    /**
+     * Retrieves a notebook
+     *
+     * @param $notebook_guid
+     * @param null $scope
+     * @return Notebook|null
+     */
     public function getNotebook($notebook_guid, $scope = null)
     {
         if (null === $scope || self::PERSONAL_SCOPE === $scope) {
@@ -625,100 +711,16 @@ class Client
         }
     }
 
-    protected function getNoteInstance(\EDAM\Types\Note $edamNote = null, $noteStore = null, $token = null)
-    {
-        $note = new Note($edamNote);
-
-        $note->authToken = $token;
-
-        $note->noteStore = $noteStore;
-
-        return $note;
-    }
-
-    protected function getShardIdFromToken($token)
-    {
-        $result = preg_match('/:?S=(s[0-9]+):?/', $token, $matches);
-
-        if ($result === 1 && array_key_exists(1, $matches)) {
-            return $matches[1];
-        }
-
-        return null;
-    }
-
     /**
-     *  Only used if specifying an explicit notebook instead.
+     * Searches for notes
+     *
+     * @param $noteSearch
+     * @param Notebook $notebook
+     * @param int $scope
+     * @param int $sortOrder
+     * @param int $maxResults
+     * @return array|bool
      */
-    const SEARCH_SCOPE_NONE            = 0;
-    /**
-     *  Search among all personal notebooks.
-     */
-    const SEARCH_SCOPE_PERSONAL        = 1; // 1 << 0
-    /**
-     *  Search among all notebooks shared to the user by others.
-     */
-    const SEARCH_SCOPE_PERSONAL_LINKED = 2; // 1 << 1
-    /**
-     *  Search among all business notebooks the user has joined.
-     */
-    const SEARCH_SCOPE_BUSINESS        = 4; // 1 << 2
-
-    /**
-     *  Use this if your app uses an "App Notebook". (any other set flags will be ignored.)
-     */
-    const SEARCH_SCOPE_APP_NOTEBOOK    = 8; // 1 << 3
-
-    // Default search is among personal notebooks only; typical and most performant scope.
-    const SEARCH_SCOPE_DEFAULT         = 1; // SEARCH_SCOPE_PERSONAL
-
-    // Search everything this user can see. PERFORMANCE NOTE: This can be very expensive and result in many roundtrips if the
-    // user is a member of a business and/or has many linked notebooks.
-    const SEARCH_SCOPE_ALL             = 7; // SEARCH_SCOPE_PERSONAL | SEARCH_SCOPE_PERSONAL_LINKED | SEARCH_SCOPE_BUSINESS
-
-    // The following options address the kind of sort that should be used.
-
-    /**
-     *  Case-insensitive order by title.
-     */
-    const SORT_ORDER_TITLE            = 1; // 1 << 0
-    /**
-     *  Most recently created first.
-     */
-    const SORT_ORDER_RECENTLY_CREATED = 2; // 1 << 1
-    /**
-     *  Most recently updated first.
-     */
-    const SORT_ORDER_RECENTLY_UPDATED = 4; // 1 << 2
-    /**
-     *  Most relevant first. NB only valid when using a single search scope.
-     */
-    const SORT_ORDER_RELEVANCE        = 8; // 1 << 3
-
-    // The following options address the ordering of the sort.
-
-    /**
-     *  Default order (no flag).
-     */
-    const SORT_ORDER_NORMAL  = 0; // 0 << 16
-    /**
-     *  Reverse order.
-     */
-    const SORT_ORDER_REVERSE = 65536; // 1 << 16
-
-    const BUSINESS_NOTE = 0;
-
-    const PERSONAL_NOTE = 1;
-
-    const SHARED_NOTE   = 2;
-
-    protected function isFlagSet($flags, $flag)
-    {
-        return !!(($flags) & ($flag));
-    }
-
-    protected $findNotesContext;
-
     public function findNotesWithSearch($noteSearch, Notebook $notebook = null, $scope = 0, $sortOrder = 0, $maxResults = 20)
     {
         if (!$noteSearch instanceof Search) {
@@ -809,6 +811,156 @@ class Client
 
         // Go directly to the next step.
         return $this->findNotes_findInPersonalScopeWithContext($context);
+    }
+
+    /**********************/
+    /** Getters / Setters */
+    /**********************/
+
+    /**
+     * Sets the advancedClient
+     *
+     * @param \Evernote\AdvancedClient $advancedClient
+     */
+    public function setAdvancedClient($advancedClient)
+    {
+        $this->advancedClient = $advancedClient;
+    }
+
+    /**
+     * Returns the advancedClient
+     *
+     * @return \Evernote\AdvancedClient
+     */
+    public function getAdvancedClient()
+    {
+        if (null === $this->advancedClient) {
+            $this->advancedClient = new AdvancedClient($this->getToken(), $this->sandbox);
+        }
+
+        return $this->advancedClient;
+    }
+
+    /**
+     * Sets the sandbox flag to true or false
+     *
+     * @param boolean $sandbox
+     */
+    public function setSandbox($sandbox)
+    {
+        $this->sandbox = $sandbox;
+    }
+
+    /**
+     * Gets the current sandbox flag
+     *
+     * @return boolean
+     */
+    public function getSandbox()
+    {
+        return $this->sandbox;
+    }
+
+    /**
+     * Sets the authentication token
+     *
+     * @param string $token
+     */
+    public function setToken($token)
+    {
+        $this->token = $token;
+    }
+
+    /**
+     * Returns the current authentication token
+     *
+     * @return string
+     */
+    public function getToken()
+    {
+        return $this->token;
+    }
+
+    /**************************/
+
+    /***************************/
+    /**** protected methods ****/
+    /***************************/
+
+    protected function getNoteStore($noteStoreUrl)
+    {
+        return $this->getAdvancedClient()->getNoteStore($noteStoreUrl);
+    }
+
+    protected function getShareUrl($guid, $shardId, $shareKey, $serviceHost)
+    {
+        return $serviceHost . "/shard/" . $shardId . "/sh/" . $guid . "/" . $shareKey;
+    }
+
+    protected function getSharedNotebookAuthResult(LinkedNotebook $linkedNotebook)
+    {
+        $sharedNoteStore = $this->getNotestore($linkedNotebook->noteStoreUrl);
+        return $sharedNoteStore->authenticateToSharedNotebook($linkedNotebook->shareKey, $this->token);
+    }
+
+    protected function getNoteBookByLinkedNotebook(LinkedNotebook $linkedNotebook)
+    {
+        $sharedNoteStore = $this->getNotestore($linkedNotebook->noteStoreUrl);
+        $authToken = $this->getSharedNotebookAuthResult($linkedNotebook)->authenticationToken;
+        $sharedNotebook = $sharedNoteStore->getSharedNotebookByAuth($authToken);
+
+        $notebook = new Notebook(null, $linkedNotebook, $sharedNotebook);
+
+        $notebook->authToken = $authToken;
+
+        return $notebook;
+    }
+
+
+    /**
+     * @return \EDAM\UserStore\AuthenticationResult
+     * @throws \Exception
+     */
+    protected function getBusinessAuth()
+    {
+        if (null === $this->businessAuth) {
+            try {
+                $this->businessAuth =
+                    $this->getAdvancedClient()
+                        ->getUserStore()->authenticateToBusiness($this->token);
+            } catch (\Exception $e) {
+                throw ExceptionFactory::create($e);
+            }
+        }
+
+        return $this->businessAuth;
+    }
+
+    protected function getNoteInstance(\EDAM\Types\Note $edamNote = null, $noteStore = null, $token = null)
+    {
+        $note = new Note($edamNote);
+
+        $note->authToken = $token;
+
+        $note->noteStore = $noteStore;
+
+        return $note;
+    }
+
+    protected function getShardIdFromToken($token)
+    {
+        $result = preg_match('/:?S=(s[0-9]+):?/', $token, $matches);
+
+        if ($result === 1 && array_key_exists(1, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
+    protected function isFlagSet($flags, $flag)
+    {
+        return !!(($flags) & ($flag));
     }
 
     protected function findNotes_listNotebooksWithContext($context)
