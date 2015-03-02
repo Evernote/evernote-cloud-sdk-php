@@ -32,11 +32,12 @@ require_once 'src/autoload.php';
 ```
 Getting started with the SDK
 -------------------------------------
-[Getting started guide](Getting_Started.md)
+[Getting started guide](documentation/Getting_Started.md)
 
 Note for users of the 1.x SDK for PHP
 -------------------------------------
-This SDK is a complete revision of the previous Evernote SDK for PHP. (Migration guide to come)
+This SDK is a complete revision of the previous Evernote SDK for PHP.
+See the [Migration guide](documentation/Migration.md) for more information.
 
 FAQ
 ---
