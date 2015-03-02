@@ -72,6 +72,11 @@ class Notebook
         }
     }
 
+    public function getEdamNotebook()
+    {
+        return $this->notebook;
+    }
+    
     public function getName()
     {
         if (null !== $this->notebook) {
