@@ -30,14 +30,14 @@ class Client
     /** @var  \EDAM\NoteStore\NoteStoreClient */
     protected $userNoteStore;
 
+    protected $isBusinessUser;
+
+
     /** @var  \EDAM\NoteStore\NoteStoreClient */
     protected $businessNoteStore;
 
     /** @var  string */
     protected $businessToken;
-
-    /** @var   \EDAM\Types\User */
-    protected $user;
 
     /** @var  \EDAM\UserStore\AuthenticationResult */
     protected $businessAuth;
@@ -146,33 +146,24 @@ class Client
     }
 
     /**
-     * Returns the User corresponding to the provided authentication token
-     *
-     * @return \EDAM\Types\User
-     * @throws \Exception
-     */
-    public function getUser()
-    {
-        if (null === $this->user) {
-            try {
-                $this->user = $this->getAdvancedClient()
-                    ->getUserStore()->getUser($this->token);
-            } catch (\Exception $e) {
-                throw ExceptionFactory::create($e);
-            }
-        }
-
-        return $this->user;
-    }
-
-    /**
      * Returns a boolean indicating if the user has a business account
      *
      * @return bool
      */
     public function isBusinessUser()
     {
-        return $this->getUser()->accounting->businessId !== null;
+        if (null === $this->isBusinessUser) {
+            try {
+                $user = $this->getAdvancedClient()
+                    ->getUserStore()->getUser($this->token);
+            } catch (\Exception $e) {
+                throw ExceptionFactory::create($e);
+            }
+
+            $this->isBusinessUser = $user->accounting->businessId !== null;
+        }
+
+        return $this->isBusinessUser();
     }
 
     /**
