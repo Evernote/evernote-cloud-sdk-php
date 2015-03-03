@@ -617,7 +617,14 @@ class Client
 
                 return $this->getNoteInstance($edam_note, $this->getUserNotestore(), $this->token);
             } catch (EDAMNotFoundException $e) {
+                // The note does not exist. No need to go further.
                 if (self::PERSONAL_SCOPE === $scope) {
+                    return null;
+                }
+            } catch (EDAMUserException $e) {
+                // The note is in a linked notebook
+                if (self::PERSONAL_SCOPE === $scope) {
+                    // we only want the personal notes
                     return null;
                 }
             }
