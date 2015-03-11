@@ -163,7 +163,7 @@ class Client
             $this->isBusinessUser = $user->accounting->businessId !== null;
         }
 
-        return $this->isBusinessUser();
+        return $this->isBusinessUser;
     }
 
     /**
