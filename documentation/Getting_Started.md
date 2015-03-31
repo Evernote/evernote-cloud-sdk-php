@@ -127,21 +127,21 @@ You may notice that we don't pass the token to the getUser() method.  It's the s
 
 Using the "simple" client
 -------------
-[Create a note](sample/client/create_note.php)
+[Create a note](../sample/client/create_note.php)
 
-[Delete a note](sample/client/delete_note.php)
+[Delete a note](../sample/client/delete_note.php)
 
-[Move a note](sample/client/move_note.php)
+[Move a note](../sample/client/move_note.php)
 
-[Share a note](sample/client/share_note.php)
+[Share a note](../sample/client/share_note.php)
 
-[Replace a note](sample/client/replace_note.php)
+[Replace a note](../sample/client/replace_note.php)
 
-[Add resources to a note](sample/client/add_resource.php)
+[Add resources to a note](../sample/client/add_resource.php)
 
-[Find notes](sample/client/find_notes.php)
+[Find notes](../sample/client/find_notes.php)
 
-[Manage reminders](sample/client/reminders.php)
+[Manage reminders](../sample/client/reminders.php)
 
 Going further
 -------------
