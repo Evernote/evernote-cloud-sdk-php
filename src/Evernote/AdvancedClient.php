@@ -53,14 +53,18 @@ class AdvancedClient
      * @param $noteStoreUrl
      * @return mixed
      */
-    public function getNoteStore($noteStoreUrl = null)
+    public function getNoteStore($noteStoreUrl = null, $token = null)
     {
         if (null === $noteStoreUrl) {
             $noteStoreUrl = $this->getUserStore()->getNoteStoreUrl($this->token);
         }
 
+        if (null == $token) {
+            $token = $this->token;
+        }
+
         return new Store(
-            $this->token,
+            $token,
             $this->getThriftClient('note', $noteStoreUrl)
         );
     }
@@ -83,7 +87,7 @@ class AdvancedClient
     {
         $businessAuth = $this->getUserStore()->authenticateToBusiness($this->token);
 
-        return $this->getNoteStore($businessAuth->noteStoreUrl);
+        return $this->getNoteStore($businessAuth->noteStoreUrl, $businessAuth->authenticationToken);
 
 
     }
