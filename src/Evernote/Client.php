@@ -329,7 +329,9 @@ class Client
                     try {
                         $resultNotebooks[] = $this->getNoteBookByLinkedNotebook($linkedNotebook);
                     } catch (\Exception $e) {
-                        echo "\nNope";
+                        $e = ExceptionFactory::create($e);
+
+                        $this->logger->error('An error occured while fetching a linked notebook as a business user', ['exception' => $e, 'token' => $this->getToken()]);
                     }
                 };
             }
