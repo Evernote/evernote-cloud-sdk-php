@@ -2,6 +2,8 @@
 
 namespace Evernote;
 
+use Psr\Log\NullLogger;
+use Psr\Log\LoggerInterface;
 use EDAM\Error\EDAMNotFoundException;
 use EDAM\Error\EDAMSystemException;
 use EDAM\Error\EDAMUserException;
@@ -41,6 +43,9 @@ class Client
 
     /** @var  \EDAM\UserStore\AuthenticationResult */
     protected $businessAuth;
+
+    /** @var \Psr\Log\LoggerInterface */
+    protected $logger;
 
     /**
      * Personal scope for the getNote and getNotebook methods
@@ -138,11 +143,12 @@ class Client
      * @param bool $sandbox
      * @param \Evernote\AdvancedClient|null $advancedClient
      */
-    public function __construct($token = null, $sandbox = true, $advancedClient = null)
+    public function __construct($token = null, $sandbox = true, $advancedClient = null, LoggerInterface $logger = null)
     {
         $this->token          = $token;
         $this->sandbox        = $sandbox;
         $this->advancedClient = $advancedClient;
+        $this->logger         = $logger ?: new NullLogger;
     }
 
     /**

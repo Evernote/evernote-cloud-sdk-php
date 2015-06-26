@@ -2,6 +2,8 @@
 
 namespace Evernote;
 
+use Psr\Log\NullLogger;
+use Psr\Log\LoggerInterface;
 use Evernote\Factory\ThriftClientFactory;
 use Evernote\Store\Store;
 
@@ -19,6 +21,9 @@ class AdvancedClient
     /** @var  \EDAM\UserStore\UserStoreClient */
     protected $userStore;
 
+    /** @var \Psr\Log\LoggerInterface */
+    protected $logger;
+
     const SANDBOX_BASE_URL = 'https://sandbox.evernote.com';
     const PROD_BASE_URL    = 'https://www.evernote.com';
 
@@ -26,11 +31,12 @@ class AdvancedClient
      * @param bool $sandbox
      * @param null $thriftClientFactory
      */
-    public function __construct($token, $sandbox = true, $thriftClientFactory = null)
+    public function __construct($token, $sandbox = true, $thriftClientFactory = null, LoggerInterface $logger = null)
     {
         $this->token               = $token;
         $this->sandbox             = $sandbox;
         $this->thriftClientFactory = $thriftClientFactory;
+        $this->logger              = $logger ?: new NullLogger;
     }
 
     /**
