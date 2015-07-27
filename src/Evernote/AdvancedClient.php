@@ -45,11 +45,7 @@ class AdvancedClient
     public function getUserStore()
     {
         if (null === $this->userStore) {
-            $this->userStore =
-                new Store(
-                    $this->token,
-                    $this->getThriftClient('user', $this->getEndpoint('/edam/user'))
-                );
+            $this->userStore = $this->getStoreInstance($this->token, 'user', $this->getEndpoint('/edam/user'));
         }
 
         return $this->userStore;
@@ -69,10 +65,7 @@ class AdvancedClient
             $token = $this->token;
         }
 
-        return new Store(
-            $token,
-            $this->getThriftClient('note', $noteStoreUrl)
-        );
+        return $this->getStoreInstance($token, 'note', $noteStoreUrl);
     }
 
 
@@ -83,10 +76,7 @@ class AdvancedClient
         $sharedAuth = $noteStore->authenticateToSharedNotebook($linkedNotebook->shareKey);
         $sharedToken = $sharedAuth->authenticationToken;
 
-        return new Store(
-            $sharedToken,
-            $this->getThriftClient('note', $noteStoreUrl)
-        );
+        return $this->getStoreInstance($sharedToken, 'note', $noteStoreUrl);
     }
 
     public function getBusinessNoteStore()
@@ -94,8 +84,6 @@ class AdvancedClient
         $businessAuth = $this->getUserStore()->authenticateToBusiness($this->token);
 
         return $this->getNoteStore($businessAuth->noteStoreUrl, $businessAuth->authenticationToken);
-
-
     }
 
     /**
@@ -118,21 +106,14 @@ class AdvancedClient
      */
     public function getThriftClientFactory()
     {
-        if (null === $this->thriftClientFactory) {
-            $this->thriftClientFactory = new ThriftClientFactory();
-        }
-
         return $this->thriftClientFactory;
     }
 
-    /**
-     * @param $type
-     * @param $url
-     * @return mixed
-     */
-    protected function getThriftClient($type, $url)
+
+
+    public function getStoreInstance($token, $type, $url)
     {
-        return $this->getThriftClientFactory()->createThriftClient($type, $url);
+        return new Store($this->getThriftClientFactory(), $token, $type, $url);
     }
 }
 
