@@ -12,8 +12,9 @@
         >
     <php>
         <!-- TOKENS -->
-        <server name="BUSINESS_TOKEN" value="" />
-        <server name="FREE_TOKEN" value="" />
+        <server name="BUSINESS_USER_TOKEN" value="" />
+        <server name="BUSINESS_ADMIN_TOKEN" value="" />
+        <server name="REGULAR_USER_TOKEN" value="" />
     </php>
     <testsuites>
         <testsuite name="Evernote Test Suite">
