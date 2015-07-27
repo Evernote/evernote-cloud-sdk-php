@@ -4,8 +4,6 @@ namespace Evernote\Tests;
 use Evernote\AdvancedClient;
 use Evernote\Client;
 use Evernote\Tests\Factory\ThriftClientFactoryMock;
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
 
 class ClientTest extends \PHPUnit_Framework_TestCase
 {
@@ -16,6 +14,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     /** @var  \Evernote\Client */
     protected $client;
 
+    protected $useFixtures = true;
+
     protected function requires($var)
     {
         if (!array_key_exists($var, $_SERVER)) {
@@ -25,9 +25,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         return $_SERVER[$var];
     }
 
-    public function getClient($token, $token_type, $sandbox = true)
+    public function getClient($token, $token_type, $sandbox = true, $useFixtures = null)
     {
-        $advancedClient = new AdvancedClient($token, $sandbox, new ThriftClientFactoryMock($token, $token_type, true));
+        $useFixtures = (null === $useFixtures) ? $this->useFixtures : $useFixtures;
+        $advancedClient = new AdvancedClient($token, $sandbox, new ThriftClientFactoryMock($token, $token_type, $useFixtures));
         return new Client($token, $sandbox, $advancedClient);
     }
 
@@ -71,6 +72,33 @@ Business shared but not published
 Business published but not shared
 Business shared and published
 User created and shared
+EOF;
+
+        $actual = "";
+        array_walk($notebooks, function($value) use (&$actual) {$actual .= "\n" . $value->name;});
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function test_listNotebooks_businessAdmin_shouldReturnAllKindsOfNotebooks()
+    {
+        $notebooks = $this->getClient($this->requires(self::BUSINESS_ADMIN_TOKEN), self::BUSINESS_ADMIN_TOKEN)->listNotebooks();
+
+        $this->assertInternalType('array', $notebooks);
+        $this->assertContainsOnlyInstancesOf('\Evernote\Model\Notebook', $notebooks);
+        $expected = <<<EOF
+
+INBOX
+Personal shared but not published
+Personal published but not shared
+Personal shared and published
+Business Notebook 1
+Business shared but not published
+My shared notebook
+Private business
+Business shared but not published bis
+Business published but not shared
+Business published and shared
 EOF;
 
         $actual = "";
