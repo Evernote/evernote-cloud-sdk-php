@@ -18,7 +18,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     protected function requires($var)
     {
-        if (!array_key_exists($var, $_SERVER) || $_SERVER[$var] === '') {
+        if (!array_key_exists($var, $_SERVER)) {
             $this->markTestSkipped();
         }
 
