@@ -79,11 +79,15 @@ class Notebook
     
     public function getName()
     {
-        if (null !== $this->notebook) {
-            return $this->notebook->name;
-        } else {
+        if (null !== $this->linkedNotebook) {
             return $this->linkedNotebook->shareName;
         }
+
+        if (null !== $this->notebook) {
+            return $this->notebook->name;
+        }
+
+        return $this->name;
     }
 
     public function isBusinessNotebook()
