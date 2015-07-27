@@ -331,7 +331,7 @@ class Client
                     } catch (\Exception $e) {
                         $e = ExceptionFactory::create($e);
 
-                        $this->logger->error('An error occured while fetching a linked notebook as a business user', ['exception' => $e, 'token' => $this->getToken()]);
+                        $this->logger->error('An error occured while fetching a linked notebook as a business user', array('exception' => $e, 'token' => $this->getToken()));
                     }
                 };
             }
