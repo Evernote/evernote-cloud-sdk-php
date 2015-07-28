@@ -546,7 +546,7 @@ class Client
 
         try {
             // We don't have credentials so we assume it's a personal note
-            return $this->getUserNotestore()->deleteNote($this->token, $note->guid);
+            return $this->getUserNotestore()->shareNote($this->token, $note->guid);
 
         } catch (EDAMNotFoundException $e) {
             // The note's not in a personal notebook. We'll need to find it
