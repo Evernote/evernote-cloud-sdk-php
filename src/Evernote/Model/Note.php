@@ -33,6 +33,9 @@ class Note
     /** @var  \EDAM\Types\NoteAttributes */
     protected $attributes;
 
+    /** @var  \EDAM\Types\NoteCreated */
+    protected $created;
+
     /** @var  boolean */
     protected $saved;
 
@@ -52,6 +55,7 @@ class Note
             $this->content      = new EnmlNoteContent($edamNote->content);
             $this->resources    = $edamNote->resources;
             $this->attributes   = $edamNote->attributes;
+            $this->created      = $edamNote->created;
             $this->tagNames     = $edamNote->tagNames;
         } else {
             $this->attributes = new NoteAttributes();
@@ -157,6 +161,16 @@ class Note
     public function setAttribute($attribute, $value)
     {
         $this->attributes->$attribute = $value;
+    }
+
+    public function getCreated()
+    {
+        return $this->created;
+    }
+
+    public function setCreated($value)
+    {
+        $this->created = $value;
     }
 
     public function getAttributes()
