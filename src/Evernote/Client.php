@@ -445,6 +445,7 @@ class Client
         $edamNote->title      = $note->title;
         $edamNote->content    = $note->content;
         $edamNote->attributes = $note->attributes;
+        $edamNote->created    = $note->created;
         $edamNote->resources  = $note->resources;
         $edamNote->tagNames   = $note->tagNames;
 
