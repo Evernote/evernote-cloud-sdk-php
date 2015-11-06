@@ -29,6 +29,9 @@ class Client
     /** @var  boolean */
     protected $sandbox;
 
+    /** @var  boolean */
+    protected $china;
+
     /** @var  \EDAM\NoteStore\NoteStoreClient */
     protected $userNoteStore;
 
@@ -142,14 +145,18 @@ class Client
      * @param string|null $token
      * @param bool $sandbox
      * @param \Evernote\AdvancedClient|null $advancedClient
+     * @param \Psr\Log\LoggerInterface|null $logger
+     * @param bool $china
      */
-    public function __construct($token = null, $sandbox = true, $advancedClient = null, LoggerInterface $logger = null)
+    public function __construct($token = null, $sandbox = true, $advancedClient = null, LoggerInterface $logger = null, $china = false)
     {
         $this->token          = $token;
         $this->sandbox        = $sandbox;
         $this->advancedClient = $advancedClient;
         $this->logger         = $logger ?: new NullLogger;
+        $this->china          = $china;
     }
+
 
     /**
      * Returns a boolean indicating if the user has a business account
@@ -297,7 +304,7 @@ class Client
 
                 /**
                  * b. Get the business's linked notebooks. Some of these will match to shared notebooks in (a), providing a
-                //      complete authorization story for the notebook.
+                 *    complete authorization story for the notebook.
                  */
                 $businessNotebooks = $this->getBusinessLinkedNotebooks();
 
@@ -842,7 +849,7 @@ class Client
     public function getAdvancedClient()
     {
         if (null === $this->advancedClient) {
-            $this->advancedClient = new AdvancedClient($this->getToken(), $this->sandbox);
+            $this->advancedClient = new AdvancedClient($this->getToken(), $this->sandbox, null, $this->logger, $this->china);
         }
 
         return $this->advancedClient;
@@ -867,6 +874,26 @@ class Client
     {
         return $this->sandbox;
     }
+
+    /**
+     * Sets the china flag to true or false
+     *
+     * @param boolean $china
+     */
+    public function setChina($china)
+    {
+        $this->china = $china;
+    }
+
+    /**
+     * Gets the current china flag
+     *
+     * @return boolean
+     */
+    public function getChina()
+    {
+        return $this->china;
+    } 
 
     /**
      * Sets the authentication token

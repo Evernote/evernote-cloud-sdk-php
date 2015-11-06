@@ -1,20 +1,27 @@
 <?php
 require __DIR__ . '/../../vendor/autoload.php';
 
-/** Understanding SANDBOX vs PRODUCTION Environments
+/** Understanding SANDBOX vs PRODUCTION vs CHINA Environments
  *
- * The Evernote API 'Sandbox' environment -> SANDBOX.EVERNOTE.COM
+ * The Evernote API 'Sandbox' environment -> SANDBOX.EVERNOTE.COM 
  *    - Create a sample Evernote account at https://sandbox.evernote.com
  * 
  * The Evernote API 'Production' Environment -> WWW.EVERNOTE.COM
  *    - Activate your Sandboxed API key for production access at https://dev.evernote.com/support/
  * 
- * For testing, set $sandbox to true, for production, set $sandbox to false
+ * The Evernote API 'CHINA' Environment -> APP.YINXIANG.COM
+ *    - Activate your Sandboxed API key for Evernote China service access at https://dev.evernote.com/support/ 
+ *      or https://dev.yinxiang.com/support/. For more information about Evernote China service, please refer 
+ *      to https://dev.evernote.com/doc/articles/bootstrap.php
+ *
+ * For testing, set $sandbox to true; for production, set $sandbox to false and $china to false; 
+ * for china service, set $sandbox to false and $china to true.
  * 
  */
 $sandbox = true;
+$china   = false;
 
-$oauth_handler = new \Evernote\Auth\OauthHandler($sandbox);
+$oauth_handler = new \Evernote\Auth\OauthHandler($sandbox, false, $china);
 
 $key      = '%key%';
 $secret   = '%secret%';

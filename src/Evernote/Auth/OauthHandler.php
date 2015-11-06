@@ -8,6 +8,8 @@ class OauthHandler
 {
     protected $sandbox;
 
+    protected $china;
+
     protected $consumer_secret;
 
     protected $token_secret;
@@ -16,10 +18,11 @@ class OauthHandler
 
     protected $params = array();
 
-    public function __construct($sandbox = true, $supportLinkedSandbox = false)
+    public function __construct($sandbox = true, $supportLinkedSandbox = false, $china = false)
     {
         $this->sandbox              = $sandbox;
         $this->supportLinkedSandbox = $supportLinkedSandbox;
+        $this->china                = $china;
 
         $this->params['oauth_callback']         = null;
         $this->params['oauth_consumer_key']     = null;
@@ -80,12 +83,17 @@ class OauthHandler
 
     protected function getBaseUrl($prefix = '')
     {
-        $subdomain = (true === $this->sandbox) ? 'sandbox':'www';
+        $baseUrl = '';
+        if (true === $this->sandbox) {
+            $baseUrl = "https://sandbox.evernote.com";
+        } elseif (true === $this->china) {
+            $baseUrl = "https://app.yinxiang.com";
+        } else {
+            $baseUrl = "https://www.evernote.com";     
+        }
+        $baseUrl .= $prefix == '' ? '' : '/' . $prefix;   
 
-        $baseUrl  = "https://$subdomain.evernote.com";
-        $baseUrl .= $prefix == '' ? '' : '/' . $prefix;
-
-        return $baseUrl;
+        return $baseUrl;     
     }
 
     protected function getTemporaryCredentials()
