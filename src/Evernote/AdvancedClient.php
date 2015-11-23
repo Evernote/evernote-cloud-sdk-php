@@ -15,6 +15,9 @@ class AdvancedClient
     /** @var bool */
     protected $sandbox;
 
+    /** @var bool */
+    protected $china;
+
     /** @var \Evernote\Factory\ThriftClientFactory  */
     protected $thriftClientFactory;
 
@@ -26,17 +29,22 @@ class AdvancedClient
 
     const SANDBOX_BASE_URL = 'https://sandbox.evernote.com';
     const PROD_BASE_URL    = 'https://www.evernote.com';
+    const CHINA_BASE_URL   = 'https://app.yinxiang.com';
 
     /**
+     * @param string $token
      * @param bool $sandbox
-     * @param null $thriftClientFactory
+     * @param Evernote\Factory\ThriftClientFactory|null $thriftClientFactory
+     * @param \Psr\Log\LoggerInterface|null $logger
+     * @param bool $china
      */
-    public function __construct($token, $sandbox = true, $thriftClientFactory = null, LoggerInterface $logger = null)
+    public function __construct($token, $sandbox = true, $thriftClientFactory = null, LoggerInterface $logger = null, $china = false)
     {
         $this->token               = $token;
         $this->sandbox             = $sandbox;
         $this->thriftClientFactory = $thriftClientFactory;
         $this->logger              = $logger ?: new NullLogger;
+        $this->china               = $china;
     }
 
     /**
@@ -92,7 +100,13 @@ class AdvancedClient
      */
     public function getEndpoint($path = null)
     {
-        $url = $this->sandbox ? self::SANDBOX_BASE_URL : self::PROD_BASE_URL;
+        if (true === $this->sandbox) {
+            $url = self::SANDBOX_BASE_URL;
+        } elseif (true === $this->china) {
+            $url = self::CHINA_BASE_URL;
+        } else {
+            $url = self::PROD_BASE_URL;
+        }    
 
         if (null != $path) {
             $url .= '/' . $path;

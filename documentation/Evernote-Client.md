@@ -196,6 +196,19 @@ Properties
 * Visibility: **protected**
 
 
+
+### $china
+
+    protected boolean $china
+
+
+
+
+
+* Visibility: **protected**
+
+
+
 ### $userNoteStore
 
     protected \EDAM\NoteStore\NoteStoreClient $userNoteStore
@@ -257,7 +270,7 @@ Methods
 
 ### __construct
 
-    mixed Evernote\Client::__construct(string|null $token, boolean $sandbox, \Evernote\AdvancedClient|null $advancedClient)
+    mixed Evernote\Client::__construct(string|null $token, boolean $sandbox, \Evernote\AdvancedClient|null $advancedClient, \Psr\Log\LoggerInterface|null $logger, boolean $china)
 
 
 
@@ -270,6 +283,8 @@ Methods
 * $token **string|null**
 * $sandbox **boolean**
 * $advancedClient **Evernote\AdvancedClient|null**
+* $logger **Psr\Log\LoggerInterface|null**
+* $china **boolean**
 
 
 
@@ -623,6 +638,36 @@ Gets the current sandbox flag
 
 
 * Visibility: **public**
+
+
+
+
+### setChina
+
+    mixed Evernote\Client::setChina(boolean $china)
+
+Sets the china flag to true or false
+
+
+
+* Visibility: **public**
+
+
+#### Arguments
+* $china **boolean**
+
+
+
+### getChina
+
+    boolean Evernote\Client::getChina()
+
+Gets the current china flag
+
+
+
+* Visibility: **public**
+
 
 
 
