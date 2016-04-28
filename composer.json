@@ -23,7 +23,7 @@
     },
     "require": {
         "php": ">=5.3",
-        "ezyang/htmlpurifier": "~4.6.0",
+        "ezyang/htmlpurifier": "^4.6.0",
         "tijsverkoyen/css-to-inline-styles": "~1.5",
         "psr/log": "~1.0"
     },
