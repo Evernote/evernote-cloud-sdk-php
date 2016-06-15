@@ -50,7 +50,6 @@ class OauthHandler
 
         // first call
         if (!array_key_exists('oauth_verifier', $_GET) && !array_key_exists('oauth_token', $_GET)) {
-            session_start();
             unset($this->params['oauth_token']);
             unset($this->params['oauth_verifier']);
 
@@ -73,7 +72,6 @@ class OauthHandler
             throw new AuthorizationDeniedException('Authorization declined.');
         //the user authorized the app
         } else {
-            session_start();
             $this->token_secret = $_SESSION['oauth_token_secret'];
 
             $this->params['oauth_token']    = $_GET['oauth_token'];
@@ -93,11 +91,11 @@ class OauthHandler
         } elseif (true === $this->china) {
             $baseUrl = "https://app.yinxiang.com";
         } else {
-            $baseUrl = "https://www.evernote.com";     
+            $baseUrl = "https://www.evernote.com";
         }
-        $baseUrl .= $prefix == '' ? '' : '/' . $prefix;   
+        $baseUrl .= $prefix == '' ? '' : '/' . $prefix;
 
-        return $baseUrl;     
+        return $baseUrl;
     }
 
     protected function getTemporaryCredentials()
