@@ -1,4 +1,4 @@
-Evernote Cloud SDK 2.0 for PHP (beta)
+Evernote Cloud SDK PHP v2.0
 =====================================
 
 A newly-redesigned, simple, workflow-oriented library built on the Evernote Cloud API. It's designed to drop into your web app easily and make most common Evernote integrations very simple to accomplish. (And even the more complex integrations easier than they used to be.)
@@ -12,7 +12,7 @@ Just run these two commands to install it:
 
 ``` bash
 $ curl -sS https://getcomposer.org/installer | php
-$ php composer.phar require evernote/evernote-cloud-sdk-php dev-master
+$ php composer.phar require evernote/evernote-cloud-sdk-php
 ```
 
 Now you can add the autoloader, and you will have access to the library:
