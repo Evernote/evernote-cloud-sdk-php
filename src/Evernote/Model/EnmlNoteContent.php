@@ -12,9 +12,13 @@ class EnmlNoteContent extends NoteContent implements NoteContentInterface
     public function __construct($content, HtmlConverterInterface $htmlConverter = null)
     {
         if (!$this->hasXmlDeclaration($content)) {
-            $content = $this->decorate($content);
+            $content = $this->addXmlDeclaration($content);
         }
-
+        
+        if (!$this->hasDoctypeDeclaration($content)) {
+            $content = $this->addDoctypeDeclaration($content);
+        }
+        
         $this->content   = $content;
         $this->htmlConverter = $htmlConverter;
     }
@@ -57,11 +61,24 @@ HTLM;
     {
         return substr(trim($content), 0, 5) == '<?xml';
     }
-
-    protected function decorate($content)
+    
+    protected function hasDoctypeDeclaration($content)
+    {
+        return strpos($content, '<!DOCTYPE') !== false;
+    }
+    
+    protected function addXmlDeclaration($content)
     {
         return <<<ENML
 <?xml version='1.0' encoding='utf-8'?>
+$content
+ENML;
+
+    }
+
+    protected function addDoctypeDeclaration($content)
+    {
+        return <<<ENML
 <!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
 <en-note>$content</en-note>
 ENML;
