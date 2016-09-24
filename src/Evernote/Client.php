@@ -1111,7 +1111,7 @@ class Client
             $context->linkedNotebooksToSearch[] = $context->scopeNotebook;
         } else {
             foreach ($context->allNotebooks as $notebook) {
-                if ($notebook->isLinked() && !$notebook->isBusinessNotebook()) {
+                if ($notebook->isLinkedNotebook() && !$notebook->isBusinessNotebook()) {
                     $context->linkedNotebooksToSearch[] = $notebook;
                 }
             }
