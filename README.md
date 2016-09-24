@@ -1,4 +1,4 @@
-Evernote Cloud SDK PHP v2.0
+Evernote Cloud SDK PHP v2.0.1
 =====================================
 
 A newly-redesigned, simple, workflow-oriented library built on the Evernote Cloud API. It's designed to drop into your web app easily and make most common Evernote integrations very simple to accomplish. (And even the more complex integrations easier than they used to be.)
