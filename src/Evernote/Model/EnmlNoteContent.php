@@ -11,14 +11,14 @@ class EnmlNoteContent extends NoteContent implements NoteContentInterface
 
     public function __construct($content, HtmlConverterInterface $htmlConverter = null)
     {
-        if (!$this->hasXmlDeclaration($content)) {
-            $content = $this->addXmlDeclaration($content);
-        }
-        
         if (!$this->hasDoctypeDeclaration($content)) {
             $content = $this->addDoctypeDeclaration($content);
         }
-        
+
+        if (!$this->hasXmlDeclaration($content)) {
+            $content = $this->addXmlDeclaration($content);
+        }
+
         $this->content   = $content;
         $this->htmlConverter = $htmlConverter;
     }
