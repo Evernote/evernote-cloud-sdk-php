@@ -91,11 +91,11 @@ class OauthHandler
         } elseif (true === $this->china) {
             $baseUrl = "https://app.yinxiang.com";
         } else {
-            $baseUrl = "https://www.evernote.com";     
+            $baseUrl = "https://www.evernote.com";
         }
-        $baseUrl .= $prefix == '' ? '' : '/' . $prefix;   
+        $baseUrl .= $prefix == '' ? '' : '/' . $prefix;
 
-        return $baseUrl;     
+        return $baseUrl;
     }
 
     protected function getTemporaryCredentials()
