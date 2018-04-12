@@ -409,6 +409,7 @@ class Client
         $edamNote->content    = $note->content;
         $edamNote->attributes = $note->attributes;
         $edamNote->resources  = $note->resources;
+        $edamNote->tagNames   = $note->tagNames;
 
         $uploaded_note = $noteToReplace->noteStore->updateNote($noteToReplace->authToken, $edamNote);
 
