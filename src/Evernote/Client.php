@@ -327,7 +327,13 @@ class Client
                         if (null === $linkedNotebook->shareKey) {
                             continue;
                         }
-                        $resultNotebooks[] = $this->getNoteBookByLinkedNotebook($linkedNotebook);
+                        try {
+                            $resultNotebooks[] = $this->getNoteBookByLinkedNotebook($linkedNotebook);
+                        } catch (\Exception $e) {
+                            $e = ExceptionFactory::create($e);
+
+                            $this->logger->error('An error occured while fetching a linked notebook as a business user', array('exception' => $e, 'token' => $this->getToken()));
+                        }
                     }
                 }
 
