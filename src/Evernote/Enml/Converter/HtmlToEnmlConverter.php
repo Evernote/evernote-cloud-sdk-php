@@ -44,7 +44,7 @@ class HtmlToEnmlConverter implements EnmlConverterInterface
         $content = $this->cleanHtml($content);
 
         //Transform to ENML via XSLT
-        $enml_body = $this->xslTransform($content, 'html2enml.xslt');
+        $enml_body = $this->xslTransform($content, __DIR__ . '/html2enml.xslt');
 
         $enml = <<<EOF
 <?xml version="1.0" encoding="UTF-8"?>
