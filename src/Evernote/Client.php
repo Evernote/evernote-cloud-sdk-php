@@ -315,11 +315,11 @@ class Client
                 foreach ($linkedNotebooks as $linkedNotebook) {
                     if (array_key_exists($linkedNotebook->shareKey, $sharedBusinessNotebooks)) {
                         $sharedNotebook = $sharedBusinessNotebooks[$linkedNotebook->shareKey];
-                        $businessNotebook = $businessNotebooksGuids[$sharedNotebook->notebookGuid];
+                        $businessNotebook = $businessNotebooksGuids[$sharedNotebook->notebookGuid] ?? null;
 
                         $result = new Notebook($businessNotebook, $linkedNotebook, $sharedNotebook, $businessNotebook);
                         if ((array_key_exists($sharedNotebook->notebookGuid, $guidsCount) && $guidsCount[$sharedNotebook->notebookGuid] > 1)
-                            || $businessNotebook->businessNotebook !== null) {
+                            || ($businessNotebook && $businessNotebook->businessNotebook !== null)) {
                             $result->isShared = true;
                         }
                         $resultNotebooks[] = $result;
