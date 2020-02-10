@@ -471,6 +471,14 @@ class Client
             $uploaded_note = $this->getUserNotestore()->createNote($this->token, $edamNote);
             $noteStore     = $this->getUserNotestore();
             $token         = $this->token;
+        } catch(EDAMUserException $e) {
+            if (!$this->isBusinessUser()) {
+                throw $e;
+            }
+
+            $noteStore = $this->getBusinessNoteStore();
+            $token = $this->getBusinessToken();
+            $uploaded_note = $noteStore->createNote($token, $edamNote);
         } catch (EDAMNotFoundException $e) {
             $notebook = $this->getNotebook($notebook->guid, self::LINKED_SCOPE);
             if (null === $notebook) {
