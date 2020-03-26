@@ -14,9 +14,6 @@ class Notebook
     protected $allowsWriting = false;
 
     /** @var bool  */
-    public $isShared = false;
-
-    /** @var bool  */
     protected $isBusinessNotebook = false;
 
     /** @var bool  */

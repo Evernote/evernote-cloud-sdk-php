@@ -254,21 +254,6 @@ class Client
         }
 
         /**
-         * Get shared notebooks and flag the matching notebook as shared
-         */
-        try {
-            $sharedNotebooks = $this->listSharedNotebooks();
-        } catch (EDAMUserException $e) {
-            $sharedNotebooks = array();
-        } catch (EDAMSystemException $e) {
-            $sharedNotebooks = array();
-        }
-
-        foreach ($sharedNotebooks as $sharedNotebook) {
-            $guidsToNotebooks[$sharedNotebook->notebookGuid]->isShared = true;
-        }
-
-        /**
          * 2. Get all of the user's linked notebooks. These will include business and/or shared notebooks.
          */
 
@@ -291,14 +276,10 @@ class Client
                  *
                  */
                 $businessSharedNotebooks     = $this->getBusinessSharedNotebooks();
-                $sharedBusinessNotebookGuids = array();
                 $sharedBusinessNotebooks     = array();
                 foreach ($businessSharedNotebooks as $businessSharedNotebook) {
                     $sharedBusinessNotebooks[$businessSharedNotebook->shareKey] = $businessSharedNotebook;
-                    $sharedBusinessNotebookGuids[] = $businessSharedNotebook->notebookGuid;
                 }
-
-                $guidsCount = array_count_values($sharedBusinessNotebookGuids);
 
                 $businessNotebooksGuids = array();
 
@@ -318,10 +299,6 @@ class Client
                         $businessNotebook = $businessNotebooksGuids[$sharedNotebook->notebookGuid] ?? null;
 
                         $result = new Notebook($businessNotebook, $linkedNotebook, $sharedNotebook, $businessNotebook);
-                        if ((array_key_exists($sharedNotebook->notebookGuid, $guidsCount) && $guidsCount[$sharedNotebook->notebookGuid] > 1)
-                            || ($businessNotebook && $businessNotebook->businessNotebook !== null)) {
-                            $result->isShared = true;
-                        }
                         $resultNotebooks[] = $result;
                     } else {
                         if (null === $linkedNotebook->shareKey) {
