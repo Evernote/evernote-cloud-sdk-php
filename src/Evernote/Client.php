@@ -237,13 +237,8 @@ class Client
         /**
          * 1. Get all of the user's personal notebooks.
          */
-        try {
-            $personalNotebooks = $this->listPersonalNotebooks();
-        } catch (EDAMUserException $e) {
-            $personalNotebooks = array();
-        } catch (EDAMSystemException $e) {
-            $personalNotebooks = array();
-        }
+
+        $personalNotebooks = $this->listPersonalNotebooks();
 
         $resultNotebooks  = array();
         $guidsToNotebooks = array();
