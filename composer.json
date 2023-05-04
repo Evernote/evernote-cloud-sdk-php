@@ -22,13 +22,18 @@
         "forum": "https://discussion.evernote.com/forum/61-evernote-for-developers/"
     },
     "require": {
-        "php": ">=5.3",
+        "php": ">=8.0",
         "ezyang/htmlpurifier": "^4.6.0",
         "tijsverkoyen/css-to-inline-styles": "~2.2",
-        "psr/log": "~1.0"
+        "psr/log": "~1.0",
+        "ext-curl": "*",
+        "ext-fileinfo": "*"
     },
     "autoload": {
         "psr-0": { "Evernote": "src/", "Thrift": "src/"},
         "classmap": ["src/EDAM"]
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6"
     }
 }
