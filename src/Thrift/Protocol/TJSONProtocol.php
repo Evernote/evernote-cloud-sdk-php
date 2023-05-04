@@ -194,7 +194,7 @@ class TJSONProtocol extends TProtocol
     }
 
     private function hexVal($s) {
-        for ($i = 0; $i < strlen($s); $i++) {
+        for ($i = 0, $iMax = strlen($s); $i < $iMax; $i++) {
             $ch = substr($s, $i, 1);
 
             if (!($ch >= "a" && $ch <= "f") && !($ch >= "0" && $ch <= "9")) {
