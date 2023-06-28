@@ -58,7 +58,8 @@ echo "\nFirst guid : " . $uploaded_note->guid;
  * The notebook will be automatically retrieved if necessary
  */
 $notebook       = new \Evernote\Model\Notebook();
-$notebook->guid = '%notebook_guid%';
+//Changed to set guid because guid is protected
+$notebook->setGuid('%notebook_guid%');
 
 
 /**
